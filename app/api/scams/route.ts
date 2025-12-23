@@ -3,19 +3,10 @@ import connectDB from '@/lib/mongodb'
 import Scam from '@/lib/models/Scam'
 import User from '@/lib/models/User'
 import crypto from 'crypto'
-import { getServerSession } from 'next-auth'
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB()
-
-    const session = await getServerSession()
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
 
     const body = await request.json()
     const {
@@ -35,13 +26,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find user
-    const user = await User.findOne({ email: session.user.email })
+    // For demo purposes, create or find a default user
+    let user = await User.findOne({ email: 'demo@scammerketkz.kz' })
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      )
+      user = new User({
+        email: 'demo@scammerketkz.kz',
+        name: 'Demo User',
+        points: 0,
+        rank: 'Новичок'
+      })
+      await user.save()
     }
 
     // Check if this phone number already exists

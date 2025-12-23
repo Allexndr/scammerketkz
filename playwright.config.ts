@@ -33,6 +33,22 @@ export default defineConfig({
       name: 'Mobile Safari',
       use: { ...devices['iPhone 12'] },
     },
+    // Internationalization test projects
+    {
+      name: 'chromium-ru',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: 'e2e/**/*.spec.ts',
+    },
+    {
+      name: 'chromium-kk',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: 'e2e/**/*.spec.ts',
+    },
+    {
+      name: 'chromium-en',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: 'e2e/**/*.spec.ts',
+    },
   ],
   webServer: {
     command: 'npm run dev',

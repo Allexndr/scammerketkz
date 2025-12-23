@@ -86,13 +86,6 @@ const ScamSchema = new mongoose.Schema<IScam>({
   timestamps: true
 })
 
-// Calculate verification status
-ScamSchema.pre('save', function(next) {
-  const totalVotes = this.likes + this.dislikes
-  if (totalVotes > 10) {
-    this.isVerified = (this.likes / totalVotes) > 0.7
-  }
-  next()
-})
+// Note: Verification status is calculated in the API routes
 
 export default mongoose.models.Scam || mongoose.model<IScam>('Scam', ScamSchema)

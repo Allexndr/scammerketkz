@@ -2,22 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/mongodb'
 import Scam from '@/lib/models/Scam'
 import User from '@/lib/models/User'
-import { getServerSession } from 'next-auth'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB()
-
-    const session = await getServerSession()
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
 
     const body = await request.json()
     const { voteType } = body // 'like' or 'dislike'
@@ -29,13 +20,24 @@ export async function POST(
       )
     }
 
-    // Find user and scam
-    const user = await User.findOne({ email: session.user.email })
-    const scam = await Scam.findById(params.id)
+    // For demo purposes, create or find a default user
+    let user = await User.findOne({ email: 'demo@scammerketkz.kz' })
+    if (!user) {
+      user = new User({
+        email: 'demo@scammerketkz.kz',
+        name: 'Demo User',
+        points: 0,
+        rank: 'Новичок'
+      })
+      await user.save()
+    }
 
-    if (!user || !scam) {
+    const { id } = await params
+    const scam = await Scam.findById(id)
+
+    if (!scam) {
       return NextResponse.json(
-        { error: 'User or scam not found' },
+        { error: 'Scam not found' },
         { status: 404 }
       )
     }

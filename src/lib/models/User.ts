@@ -48,18 +48,6 @@ const UserSchema = new mongoose.Schema<IUser>({
   timestamps: true
 })
 
-// Update rank based on points
-UserSchema.pre('save', function(next) {
-  if (this.points >= 1000) {
-    this.rank = 'Мастер'
-  } else if (this.points >= 500) {
-    this.rank = 'Эксперт'
-  } else if (this.points >= 100) {
-    this.rank = 'Охотник'
-  } else {
-    this.rank = 'Новичок'
-  }
-  next()
-})
+// Note: Rank is updated in API routes
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema)

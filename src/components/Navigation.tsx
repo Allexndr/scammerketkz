@@ -2,10 +2,13 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { Menu, X } from 'lucide-react'
+import LanguageSwitcher from './LanguageSwitcher'
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
+  const t = useTranslations('navigation')
 
   const toggleMenu = () => setIsOpen(!isOpen)
 
@@ -28,42 +31,46 @@ export default function Navigation() {
               href="/"
               className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md transition-colors"
             >
-              Главная
+              {t('home')}
             </Link>
             <Link
               href="/scams"
               className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md transition-colors"
             >
-              Сообщения
+              {t('reports')}
             </Link>
             <Link
               href="/report"
               className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium"
             >
-              Сообщить
+              {t('report')}
             </Link>
             <Link
               href="/leaderboard"
               className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md transition-colors"
             >
-              Рейтинг
+              {t('leaderboard')}
             </Link>
             <Link
               href="/privacy"
               className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md transition-colors"
             >
-              Конфиденциальность
+              {t('privacy')}
             </Link>
+            <LanguageSwitcher />
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            onClick={toggleMenu}
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            aria-label="Toggle menu"
-          >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="md:hidden flex items-center gap-2">
+            <LanguageSwitcher />
+            <button
+              onClick={toggleMenu}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label={t('menu')}
+            >
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
@@ -75,35 +82,35 @@ export default function Navigation() {
                 className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md transition-colors"
                 onClick={() => setIsOpen(false)}
               >
-                Главная
+                {t('home')}
               </Link>
               <Link
                 href="/scams"
                 className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md transition-colors"
                 onClick={() => setIsOpen(false)}
               >
-                Сообщения
+                {t('reports')}
               </Link>
               <Link
                 href="/report"
                 className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium text-center"
                 onClick={() => setIsOpen(false)}
               >
-                Сообщить о мошеннике
+                {t('report')}
               </Link>
               <Link
                 href="/leaderboard"
                 className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md transition-colors"
                 onClick={() => setIsOpen(false)}
               >
-                Рейтинг
+                {t('leaderboard')}
               </Link>
               <Link
                 href="/privacy"
                 className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md transition-colors"
                 onClick={() => setIsOpen(false)}
               >
-                Конфиденциальность
+                {t('privacy')}
               </Link>
             </div>
           </div>
