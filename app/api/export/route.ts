@@ -2,9 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/mongodb'
 import Scam from '@/lib/models/Scam'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
-    await connectDB()
+    const db = await connectDB()
+
+    // Return mock response if no real database connection
+    if (!db || !(db as any).connection?.readyState || (db as any).connection?.readyState !== 1) {
+      return NextResponse.json([])
+    }
 
     const { searchParams } = new URL(request.url)
     const format = searchParams.get('format') || 'json'

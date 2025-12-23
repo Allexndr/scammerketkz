@@ -1,6 +1,8 @@
 import ReportForm from '@/components/ReportForm'
 import Disclaimer from '@/components/Disclaimer'
 
+export const dynamic = 'force-dynamic'
+
 export default function ReportPage() {
   return (
     <div className="min-h-screen bg-gray-50">

@@ -1,6 +1,8 @@
 import { Suspense } from 'react'
 import LeaderboardTable from '@/components/LeaderboardTable'
 
+export const dynamic = 'force-dynamic'
+
 export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">

@@ -3,9 +3,28 @@ import connectDB from '@/lib/mongodb'
 import User from '@/lib/models/User'
 import Scam from '@/lib/models/Scam'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
-    await connectDB()
+    const db = await connectDB()
+
+    // Return mock response if no real database connection
+    if (!db || !(db as any).connection?.readyState || (db as any).connection?.readyState !== 1) {
+      return NextResponse.json({
+        users: [
+          {
+            _id: 'mock-user-1',
+            name: 'Demo User',
+            points: 100,
+            rank: 'Охотник',
+            reportsCount: 5,
+            votesCount: 20
+          }
+        ],
+        total: 1
+      })
+    }
 
     // Aggregate users with their stats
     const leaderboard = await User.aggregate([

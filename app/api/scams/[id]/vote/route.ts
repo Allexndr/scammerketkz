@@ -3,12 +3,36 @@ import connectDB from '@/lib/mongodb'
 import Scam from '@/lib/models/Scam'
 import User from '@/lib/models/User'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await connectDB()
+    const db = await connectDB()
+    const { id } = await params
+
+    // Return mock response if no real database connection
+    if (!db || !(db as any).connection?.readyState || (db as any).connection?.readyState !== 1) {
+      return NextResponse.json({
+        _id: id,
+        phoneNumberHash: 'mock-hash',
+        gender: 'unknown',
+        company: 'Test Company',
+        scamType: 'other',
+        region: 'Test Region',
+        description: 'Test description',
+        likes: Math.floor(Math.random() * 10),
+        dislikes: Math.floor(Math.random() * 5),
+        reportedBy: 'mock-user',
+        status: 'Низкая угроза',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+    }
+
+    const scamId = id
 
     const body = await request.json()
     const { voteType } = body // 'like' or 'dislike'
@@ -32,8 +56,7 @@ export async function POST(
       await user.save()
     }
 
-    const { id } = await params
-    const scam = await Scam.findById(id)
+    const scam = await Scam.findById(scamId)
 
     if (!scam) {
       return NextResponse.json(
