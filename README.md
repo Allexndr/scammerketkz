@@ -1,6 +1,35 @@
-# AntiScamKZ - Платформа против мошенничества в Казахстане
+# 🚀 ScammerKetKz - Анти-мошенническая платформа Казахстана
 
-Краудсорсинг-платформа для коллективной борьбы с мошенничеством в Казахстане. Пользователи могут проверять подозрительные номера, вносить отчеты о мошенниках и голосовать за достоверность информации.
+[![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC)](https://tailwindcss.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248)](https://www.mongodb.com/)
+[![Jest](https://img.shields.io/badge/Jest-Testing-C21325)](https://jestjs.io/)
+[![Playwright](https://img.shields.io/badge/Playwright-E2E-2EAD33)](https://playwright.dev/)
+
+**Краудсорсинг-платформа для коллективной борьбы с мошенничеством в Казахстане.** Пользователи могут проверять подозрительные номера, вносить отчеты о мошенниках и голосовать за достоверность информации.
+
+🌐 **[Демо на Vercel](https://scammerketkz.vercel.app)** | 📱 **[Telegram бот](https://t.me/scammerketkz_bot)**
+
+## ✨ Возможности
+
+### 🎯 Основной функционал
+- **🔍 Проверка номеров** - Быстрый поиск по базе мошенников
+- **📝 Добавление отчетов** - Форма с валидацией и CAPTCHA
+- **🗳️ Система голосования** - Лайки/дизлайки для верификации
+- **📊 Топ компаний** - Рейтинг самых активных мошенников
+- **🏆 Рейтинг пользователей** - Gamification с баллами и рангами
+
+### 🤖 Telegram бот
+- `/check <номер>` - Проверить номер телефона
+- `/add` - Добавить отчет о мошеннике
+- `/top` - Посмотреть топ компаний
+- `/help` - Справка
+
+### 💰 Монетизация
+- **Google AdSense** - Адаптивные баннеры
+- **Yandex RTB** - Нативная реклама
+- **Оптимизированная верстка** для максимального дохода
 
 ## 🚀 Особенности
 
@@ -30,8 +59,8 @@
 
 1. **Клонируйте репозиторий:**
    ```bash
-   git clone https://github.com/yourusername/antiscamkz.git
-   cd antiscamkz
+   git clone https://github.com/Allexndr/scammerketkz.git
+   cd scammerketkz
    ```
 
 2. **Установите зависимости:**
@@ -42,28 +71,28 @@
 3. **Настройте переменные окружения:**
    Создайте `.env.local` файл:
    ```env
-   MONGODB_URI=mongodb+srv://...
-   NEXTAUTH_SECRET=your-secret
-   TELEGRAM_BOT_TOKEN=your-bot-token
+   MONGODB_URI=mongodb+srv://Vercel-Admin-scam:3RJZ9U4EFsggdIkX@scam.b1cuapw.mongodb.net/?retryWrites=true&w=majority
+   NEXTAUTH_SECRET=your-secret-key-here-change-this
+   TELEGRAM_BOT_TOKEN=your-telegram-bot-token
+   ADMIN_EMAIL=admin@scammerketkz.kz
    ```
 
-4. **Запустите базу данных:**
-   Убедитесь, что MongoDB Atlas настроена и подключена.
-
-5. **Запустите приложение:**
+4. **Запустите приложение:**
    ```bash
    npm run dev
    ```
+   🌐 Открыть: `http://localhost:3000`
 
-6. **Запустите Telegram бота (опционально):**
+5. **Запустите Telegram бота:**
    ```bash
    npm run bot
    ```
 
-7. **Запустите тесты:**
+6. **Запустите тесты:**
    ```bash
-   npm test              # Unit tests
+   npm test              # Unit & Integration tests
    npm run test:e2e      # E2E tests (нужен запущенный dev сервер)
+   npm run test:coverage # Coverage report
    ```
 
 ## 📁 Структура проекта
@@ -211,12 +240,79 @@ npm run test:coverage
 3. **Масштабирование** - оптимизация производительности
 4. **Партнерства** - интеграция с банками и полицией
 
+## 🚀 Деплой
+
+### Vercel (Рекомендуется)
+```bash
+npm install -g vercel
+vercel --prod
+```
+
+### Настройка рекламы
+1. Зарегистрируйтесь в [Google AdSense](https://adsense.google.com)
+2. Получите Publisher ID
+3. Замените `YOUR_PUBLISHER_ID` в компонентах:
+   - `src/components/AdBanner.tsx`
+   - `src/components/AdSidebar.tsx`
+4. Аналогично настройте [Yandex Advertising](https://direct.yandex.ru/)
+
+## 📊 Архитектура
+
+```
+scammerketkz/
+├── app/                    # Next.js App Router
+│   ├── api/               # REST API endpoints
+│   ├── globals.css        # Global styles
+│   └── page.tsx           # Home page
+├── src/
+│   ├── components/        # React components
+│   └── lib/              # Database models & utilities
+├── bot/                   # Telegram bot
+├── __tests__/            # Comprehensive test suite
+├── e2e/                  # E2E tests
+└── public/               # Static assets
+```
+
+## 🤝 Вклад в проект
+
+Мы приветствуем вклад! Пожалуйста:
+
+1. **Fork** репозиторий
+2. Создайте **feature branch**: `git checkout -b feature/amazing-feature`
+3. **Commit** изменения: `git commit -m 'Add amazing feature'`
+4. **Push** в branch: `git push origin feature/amazing-feature`
+5. Откройте **Pull Request**
+
+### 📋 Стандарты кода
+- **ESLint** для линтинга
+- **Prettier** для форматирования
+- **TypeScript** для типизации
+- **Jest** для тестирования
+
+## 📄 Лицензия
+
+Этот проект распространяется под лицензией **MIT**. Подробности в файле `LICENSE`.
+
+## ⚠️ Дисклеймер
+
+**ScammerKetKz** - краудсорсинг-платформа. Мы не модерируем контент и не несем ответственности за достоверность информации. Все данные предоставляются пользователями и проверяются через голосование. Используйте информацию на свой страх и риск.
+
 ---
 
-*Сделано с ❤️ для безопасного Казахстана*
+## 🎉 Благодарности
 
-## 📞 Поддержка
+- **Казахстанскому сообществу** за поддержку идеи
+- **Open source сообществу** за отличные инструменты
+- **Всем, кто борется с мошенничеством** в сети
 
-- **Issues**: Создавайте issues на GitHub
-- **Email**: support@antiscamkz.kz
-- **Telegram**: @antiscamkz_support
+**Сделано с ❤️ для безопасного Казахстана** 🇰🇿
+
+## 📞 Контакты
+
+- **GitHub Issues**: [Сообщить о баге](https://github.com/Allexndr/scammerketkz/issues)
+- **Email**: support@scammerketkz.kz
+- **Telegram**: @scammerketkz_support
+
+---
+
+⭐ **Если проект оказался полезным, поставьте звезду на GitHub!** ⭐
