@@ -1,36 +1,222 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AntiScamKZ - Платформа против мошенничества в Казахстане
 
-## Getting Started
+Краудсорсинг-платформа для коллективной борьбы с мошенничеством в Казахстане. Пользователи могут проверять подозрительные номера, вносить отчеты о мошенниках и голосовать за достоверность информации.
 
-First, run the development server:
+## 🚀 Особенности
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Проверка номеров**: Быстрый поиск по базе мошенников
+- **Краудсорсинг-верификация**: Система лайков/дизлайков для проверки данных
+- **Топ компаний**: Рейтинг компаний, от которых чаще всего звонят мошенники
+- **Gamification**: Система баллов и рангов для активных пользователей
+- **Telegram бот**: Удобный доступ через Telegram
+- **Экспорт данных**: CSV/JSON/PDF для анализа и интеграций
+- **Полная анонимность**: Хэширование номеров, защита данных
+
+## 🛠️ Технологии
+
+- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes
+- **База данных**: MongoDB Atlas
+- **Бот**: Telegram Bot API
+- **Деплой**: Vercel (бесплатно)
+
+## 📋 Требования
+
+- Node.js 18+
+- MongoDB Atlas аккаунт
+- Telegram Bot Token (от @BotFather)
+
+## 🚀 Быстрый старт
+
+1. **Клонируйте репозиторий:**
+   ```bash
+   git clone https://github.com/yourusername/antiscamkz.git
+   cd antiscamkz
+   ```
+
+2. **Установите зависимости:**
+   ```bash
+   npm install
+   ```
+
+3. **Настройте переменные окружения:**
+   Создайте `.env.local` файл:
+   ```env
+   MONGODB_URI=mongodb+srv://...
+   NEXTAUTH_SECRET=your-secret
+   TELEGRAM_BOT_TOKEN=your-bot-token
+   ```
+
+4. **Запустите базу данных:**
+   Убедитесь, что MongoDB Atlas настроена и подключена.
+
+5. **Запустите приложение:**
+   ```bash
+   npm run dev
+   ```
+
+6. **Запустите Telegram бота (опционально):**
+   ```bash
+   npm run bot
+   ```
+
+7. **Запустите тесты:**
+   ```bash
+   npm test              # Unit tests
+   npm run test:e2e      # E2E tests (нужен запущенный dev сервер)
+   ```
+
+## 📁 Структура проекта
+
+```
+antiscamkz/
+├── app/                    # Next.js App Router
+│   ├── api/               # API endpoints
+│   ├── globals.css        # Global styles
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home page
+├── bot/                   # Telegram bot
+├── components/            # React components
+├── lib/                   # Utilities and database
+│   ├── models/           # MongoDB schemas
+│   └── mongodb.ts        # Database connection
+└── public/               # Static assets
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🔧 API Endpoints
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Основные endpoints:
+- `GET /api/search?q=номер` - Поиск мошенников
+- `POST /api/scams` - Добавление отчета
+- `POST /api/scams/[id]/vote` - Голосование
+- `GET /api/analytics/top-companies` - Топ компаний
+- `GET /api/export` - Экспорт данных
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🧪 Тестирование
 
-## Learn More
+Проект включает comprehensive тестовый набор:
 
-To learn more about Next.js, take a look at the following resources:
+### Unit Tests (Jest)
+```bash
+npm test
+```
+- **Smoke tests** - базовые проверки функциональности
+- **API tests** - тестирование эндпоинтов
+- **Utility tests** - тестирование утилит (хэширование, валидация)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### E2E Tests (Playwright)
+```bash
+npm run test:e2e
+```
+- **Home page tests** - проверка главной страницы
+- **User interaction tests** - тестирование пользовательских сценариев
+- **Responsive design tests** - проверка мобильной адаптации
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Coverage Report
+```bash
+npm run test:coverage
+```
 
-## Deploy on Vercel
+## 🤖 Telegram Bot
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Команды бота:
+- `/start` - Приветствие
+- `/check <номер>` - Проверить номер
+- `/add` - Добавить отчет
+- `/top` - Топ компаний
+- `/help` - Справка
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## ⚖️ Правовые аспекты
+
+- **Нет модерации**: Верификация через пользовательское голосование
+- **Полные дисклеймеры**: Во всех формах и на страницах
+- **Политика конфиденциальности**: Соответствует законам РК
+- **Анонимизация данных**: Хэширование номеров телефонов
+
+## 📊 Аналитика
+
+Платформа предоставляет:
+- Топ-10 компаний мошенников
+- Статистика по регионам
+- Графики верификации
+- Экспорт для исследований
+
+## 💰 Монетизация
+
+Платформа включает готовую систему монетизации:
+
+### Рекламные блоки:
+- **Google AdSense** - баннеры 728x90, 300x600, 320x50
+- **Yandex RTB** - нативная реклама и баннеры
+- **Адаптивный дизайн** - разная реклама для desktop/mobile
+
+### Настройка рекламы:
+1. Зарегистрируйтесь в Google AdSense
+2. Получите Publisher ID
+3. Обновите `AdBanner.tsx` и `AdSidebar.tsx` с реальными ID
+4. Аналогично настройте Yandex Advertising
+
+### Рекламные позиции:
+- **Header banner** - 728x90 (desktop), 320x50 (mobile)
+- **Sidebar** - 300x600 + 300x300 (desktop only)
+- **Content** - нативная реклама между секциями
+
+## 🔒 Безопасность
+
+- Rate limiting на API
+- CAPTCHA на формах
+- Шифрование данных
+- Регулярные аудиты
+
+## 🤝 Вклад в проект
+
+Мы приветствуем вклад! Пожалуйста:
+1. Fork репозиторий
+2. Создайте feature branch
+3. Commit изменения
+4. Push и создайте Pull Request
+
+## 📞 Контакты
+
+- Email: support@antiscamkz.kz
+- Telegram: @antiscamkz_support
+
+## ⚠️ Важно
+
+**Эта платформа не несет ответственности за достоверность данных.** Все информация предоставляется пользователями и проверяется через голосование. Используйте информацию на свой страх и риск.
+
+## 📊 Статус проекта
+
+### ✅ Реализовано:
+- [x] Базовая архитектура (Next.js + MongoDB)
+- [x] Формы поиска и добавления мошенников
+- [x] Система голосования (лайки/дизлайки)
+- [x] Аналитика и топы компаний
+- [x] Telegram бот
+- [x] Gamification система
+- [x] Экспорт данных
+- [x] Рекламная интеграция
+- [x] Тестовый набор
+- [x] Политика конфиденциальности
+
+### 🔄 В процессе:
+- [ ] Система аутентификации пользователей
+- [ ] Расширенная система голосования
+- [ ] Продвинутая аналитика
+- [ ] Мобильное приложение
+
+### 🎯 Следующие шаги:
+1. **Запуск MVP** - базовая версия с основным функционалом
+2. **Добавление пользователей** - регистрация и профили
+3. **Масштабирование** - оптимизация производительности
+4. **Партнерства** - интеграция с банками и полицией
+
+---
+
+*Сделано с ❤️ для безопасного Казахстана*
+
+## 📞 Поддержка
+
+- **Issues**: Создавайте issues на GitHub
+- **Email**: support@antiscamkz.kz
+- **Telegram**: @antiscamkz_support
