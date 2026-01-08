@@ -1,110 +1,103 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Users, FileText, CheckCircle, ThumbsUp } from 'lucide-react'
+import { Users, FileText, Building2, TrendingUp } from 'lucide-react'
 
-interface StatsData {
-  totalScams: number
-  totalVerified: number
-  verificationRate: number
-  totalVotes: number
+interface Stats {
+    totalScams: number
+    totalUsers: number
+    totalCompanies: number
+    verifiedScams: number
 }
 
 export default function StatsOverview() {
-  const [stats, setStats] = useState<StatsData | null>(null)
-  const [loading, setLoading] = useState(true)
+    const [stats, setStats] = useState<Stats>({
+        totalScams: 0,
+        totalUsers: 0,
+        totalCompanies: 0,
+        verifiedScams: 0,
+    })
 
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const response = await fetch('/api/analytics/top-companies')
-        if (response.ok) {
-          const data = await response.json()
-          setStats(data.totalStats)
-        } else {
-          // Пока нет данных, показываем пустые значения
-          setStats({
-            totalScams: 0,
-            totalVerified: 0,
-            verificationRate: 0,
-            totalVotes: 0
-          })
+    // Mock data for initial render to avoid layout shift if API fails
+    const [loading, setLoading] = useState(false)
+
+    // Enable API call
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const response = await fetch('/api/stats')
+                if (response.ok) {
+                    const data = await response.json()
+                    setStats(data)
+                }
+            } catch (error) {
+                console.error('Failed to fetch stats:', error)
+            } finally {
+                setLoading(false)
+            }
         }
-      } catch (error) {
-        console.error('Error fetching stats:', error)
-        setStats({
-          totalScams: 0,
-          totalVerified: 0,
-          verificationRate: 0,
-          totalVotes: 0
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
 
-    fetchStats()
-  }, [])
+        fetchStats()
+    }, [])
 
-  if (loading) {
+    const statCards = [
+        {
+            icon: FileText,
+            label: 'Всего сообщений',
+            value: stats.totalScams,
+            color: 'from-[#D2B48C] to-[#CD7F32]',
+            bgColor: 'bg-[#FAF0E6]',
+        },
+        {
+            icon: Users,
+            label: 'Активных пользователей',
+            value: stats.totalUsers,
+            color: 'from-[#8FBC8F] to-[#7CAC7C]',
+            bgColor: 'bg-[#F0F8F0]',
+        },
+        {
+            icon: Building2,
+            label: 'Компаний-мошенников',
+            value: stats.totalCompanies,
+            color: 'from-[#BC8F8F] to-[#A57C7C]',
+            bgColor: 'bg-[#F8F0F0]',
+        },
+        {
+            icon: TrendingUp,
+            label: 'Верифицировано',
+            value: stats.verifiedScams,
+            color: 'from-[#DEB887] to-[#D4A574]',
+            bgColor: 'bg-[#FFF8E7]',
+        },
+    ]
+
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
-            <div className="animate-pulse">
-              <div className="h-8 bg-gray-300 rounded mb-2"></div>
-              <div className="h-4 bg-gray-300 rounded"></div>
-            </div>
-          </div>
-        ))}
-      </div>
-    )
-  }
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {statCards.map((stat, index) => {
+                const Icon = stat.icon
+                return (
+                    <div
+                        key={index}
+                        className="stat-card group"
+                    >
+                        <div className={`absolute top-0 right-0 w-24 h-24 ${stat.bgColor} rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
 
-  if (!stats) return null
+                        <div className="relative">
+                            <div className={`inline-flex bg-gradient-to-br ${stat.color} p-3 rounded-xl shadow-md mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                                <Icon className="w-6 h-6 text-white" />
+                            </div>
 
-  const statCards = [
-    {
-      icon: FileText,
-      label: 'Всего сообщений',
-      value: stats.totalScams,
-      color: 'text-blue-600'
-    },
-    {
-      icon: CheckCircle,
-      label: 'Верифицировано',
-      value: `${stats.verificationRate}%`,
-      color: 'text-green-600'
-    },
-    {
-      icon: ThumbsUp,
-      label: 'Всего голосов',
-      value: stats.totalVotes,
-      color: 'text-purple-600'
-    },
-    {
-      icon: Users,
-      label: 'Активных пользователей',
-      value: '~' + Math.floor(stats.totalScams / 3), // Rough estimate
-      color: 'text-orange-600'
-    }
-  ]
+                            <div className={`text-3xl sm:text-4xl font-black mb-2 bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
+                                {stat.value.toLocaleString('ru-RU')}
+                            </div>
 
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-      {statCards.map((stat, index) => (
-        <div key={index} className="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-          <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-full ${stat.color.replace('text-', 'bg-').replace('-600', '-100')}`}>
-              <stat.icon className={`w-6 h-6 ${stat.color}`} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-2xl lg:text-3xl font-bold text-gray-900 truncate">{stat.value}</div>
-              <div className="text-sm text-gray-600 truncate">{stat.label}</div>
-            </div>
-          </div>
+                            <div className="text-sm sm:text-base text-gray-600 font-medium">
+                                {stat.label}
+                            </div>
+                        </div>
+                    </div>
+                )
+            })}
         </div>
-      ))}
-    </div>
-  )
+    )
 }

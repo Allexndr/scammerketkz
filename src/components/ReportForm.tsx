@@ -1,234 +1,280 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { AlertTriangle, Phone, Building, MapPin, MessageSquare, CheckCircle } from 'lucide-react'
-
-interface FormData {
-  phoneNumber: string
-  gender: 'male' | 'female' | 'unknown'
-  company: string
-  scamType: 'phishing' | 'fake_sale' | 'crypto' | 'other'
-  region: string
-  description: string
-}
-
-const regions = [
-  'Алматы', 'Астана', 'Шымкент', 'Актобе', 'Атырау', 'Караганда',
-  'Костанай', 'Кызылорда', 'Павлодар', 'Петропавск', 'Тараз', 'Уральск', 'Усть-Каменогорск', 'other'
-]
+import { useRouter } from '@/i18n/routing'
+import { AlertCircle, Upload, X } from 'lucide-react'
 
 export default function ReportForm() {
   const router = useRouter()
-  const [formData, setFormData] = useState<FormData>({
-    phoneNumber: '',
-    gender: 'unknown',
-    company: '',
-    scamType: 'other',
-    region: 'other',
-    description: ''
-  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
-  const [acceptedDisclaimer, setAcceptedDisclaimer] = useState(false)
+
+  const [formData, setFormData] = useState({
+    phone: '',
+    gender: '',
+    representedAs: '',
+    company: '',
+    type: '',
+    region: '',
+    description: '',
+  })
+
+  const scamTypes = [
+    'Банковский фишинг',
+    'Крипто-мошенничество',
+    'Фейковая продажа',
+    'Лже-сотрудник банка',
+    'Инвестиционная пирамида',
+    'Другое',
+  ]
+
+  const regions = [
+    'Алматы',
+    'Астана',
+    'Шымкент',
+    'Актобе',
+    'Караганда',
+    'Тараз',
+    'Павлодар',
+    'Усть-Каменогорск',
+    'Семей',
+    'Атырау',
+    'Костанай',
+    'Кызылорда',
+    'Уральск',
+    'Петропавловск',
+    'Другой регион',
+  ]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!acceptedDisclaimer) {
-      setError('Необходимо принять условия')
-      return
-    }
-
-    setLoading(true)
     setError('')
+    setLoading(true)
 
     try {
       const response = await fetch('/api/scams', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
       })
 
-      const data = await response.json()
-
       if (response.ok) {
-        setSuccess(true)
-        setTimeout(() => {
-          router.push('/')
-        }, 2000)
+        const data = await response.json()
+        router.push(`/scams/${data.id}`)
       } else {
-        setError(data.error || 'Ошибка при отправке отчета')
+        const errorData = await response.json()
+        setError(errorData.error || 'Ошибка при добавлении')
       }
-    } catch (error) {
+    } catch (err) {
       setError('Ошибка сети. Попробуйте позже.')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
-
-  if (success) {
-    return (
-      <div className="text-center py-8">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="w-8 h-8 text-green-600" />
-        </div>
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-          Отчет отправлен!
-        </h2>
-        <p className="text-gray-600 mb-4">
-          Спасибо за помощь в борьбе с мошенничеством. Ваш вклад будет проверен другими пользователями.
-        </p>
-        <p className="text-sm text-gray-500">
-          Перенаправление на главную страницу...
-        </p>
-      </div>
-    )
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }))
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-red-600" />
-            <span className="text-red-800">{error}</span>
+    <form onSubmit={handleSubmit} className="card-glass">
+      <div className="space-y-6">
+        {/* Error Message */}
+        {error && (
+          <div className="p-4 bg-gradient-to-r from-[#FEE] to-[#FDD] border-2 border-[#BC8F8F] rounded-2xl flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-[#BC8F8F] flex-shrink-0" />
+            <p className="text-sm text-gray-700">{error}</p>
           </div>
-        </div>
-      )}
+        )}
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Номер телефона мошенника *
-        </label>
-        <div className="relative">
-          <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+        {/* Phone Number */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Номер телефона мошенника <span className="text-[#BC8F8F]">*</span>
+          </label>
           <input
             type="tel"
-            value={formData.phoneNumber}
-            onChange={(e) => handleChange('phoneNumber', e.target.value)}
-            placeholder="+7 (777) 123-45-67"
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
             required
+            placeholder="+7 или 8..."
+            className="input-modern"
           />
+          <p className="mt-1.5 text-xs text-gray-500">
+            Введите в любом формате: +7, 8, или без кода страны
+          </p>
         </div>
-      </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Пол мошенника
-        </label>
-        <select
-          value={formData.gender}
-          onChange={(e) => handleChange('gender', e.target.value as FormData['gender'])}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="unknown">Неизвестно</option>
-          <option value="male">Мужской</option>
-          <option value="female">Женский</option>
-        </select>
-      </div>
+        {/* Gender */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Пол мошенника
+          </label>
+          <div className="grid grid-cols-3 gap-3">
+            {['Мужчина', 'Женщина', 'Не помню'].map((gender) => (
+              <button
+                key={gender}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, gender }))}
+                className={`px-4 py-3 rounded-xl font-medium transition-all duration-300 ${formData.gender === gender
+                    ? 'bg-gradient-to-r from-[#D2B48C] to-[#CD7F32] text-white shadow-lg'
+                    : 'bg-white border border-[#F7E7CE] text-gray-700 hover:border-[#D2B48C]'
+                  }`}
+              >
+                {gender}
+              </button>
+            ))}
+          </div>
+        </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Компания, от которой представился *
-        </label>
-        <div className="relative">
-          <Building className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+        {/* Represented As */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Кем представился(лась) <span className="text-[#BC8F8F]">*</span>
+          </label>
           <input
             type="text"
-            value={formData.company}
-            onChange={(e) => handleChange('company', e.target.value)}
-            placeholder="Например: Kaspi Bank, Halyk Bank, Сбербанк"
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            name="representedAs"
+            value={formData.representedAs}
+            onChange={handleChange}
             required
+            placeholder="Например: сотрудник банка Kaspi"
+            className="input-modern"
           />
         </div>
-      </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Тип мошенничества
-        </label>
-        <select
-          value={formData.scamType}
-          onChange={(e) => handleChange('scamType', e.target.value as FormData['scamType'])}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="other">Другое</option>
-          <option value="phishing">Фишинг (запрос SMS/карточных данных)</option>
-          <option value="fake_sale">Фейковая продажа/услуга</option>
-          <option value="crypto">Криптовалютное мошенничество</option>
-        </select>
-      </div>
+        {/* Company */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            От какой компании <span className="text-[#BC8F8F]">*</span>
+          </label>
+          <input
+            type="text"
+            name="company"
+            value={formData.company}
+            onChange={handleChange}
+            required
+            placeholder="Например: Kaspi Bank"
+            className="input-modern"
+          />
+        </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Регион
-        </label>
-        <div className="relative">
-          <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+        {/* Type */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Тип мошенничества <span className="text-[#BC8F8F]">*</span>
+          </label>
           <select
-            value={formData.region}
-            onChange={(e) => handleChange('region', e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            name="type"
+            value={formData.type}
+            onChange={handleChange}
+            required
+            className="input-modern"
           >
-            {regions.map(region => (
-              <option key={region} value={region}>
-                {region === 'other' ? 'Другой' : region}
+            <option value="">Выберите тип...</option>
+            {scamTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
               </option>
             ))}
           </select>
         </div>
-      </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Описание ситуации *
-        </label>
-        <div className="relative">
-          <MessageSquare className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-          <textarea
-            value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
-            placeholder="Опишите, что произошло. Как представился мошенник? Что просил сделать? Любые детали помогут другим пользователям."
-            rows={4}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-        </div>
-      </div>
-
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <input
-            type="checkbox"
-            id="disclaimer"
-            checked={acceptedDisclaimer}
-            onChange={(e) => setAcceptedDisclaimer(e.target.checked)}
-            className="mt-1"
-          />
-          <label htmlFor="disclaimer" className="text-sm text-blue-800">
-            <strong>Я понимаю и принимаю:</strong> Эта информация будет проверена другими пользователями через голосование.
-            Мы не модерируем контент и не несем ответственности за его достоверность.
-            Решение использовать эту информацию принимаю самостоятельно.
+        {/* Region */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Регион <span className="text-[#BC8F8F]">*</span>
           </label>
+          <select
+            name="region"
+            value={formData.region}
+            onChange={handleChange}
+            required
+            className="input-modern"
+          >
+            <option value="">Выберите регион...</option>
+            {regions.map((region) => (
+              <option key={region} value={region}>
+                {region}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Description */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Описание ситуации <span className="text-[#BC8F8F]">*</span>
+          </label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            required
+            rows={4}
+            placeholder="Опишите что произошло, что говорил мошенник, какие данные запрашивал..."
+            className="input-modern resize-none"
+          />
+          <p className="mt-1.5 text-xs text-gray-500">
+            Минимум 20 символов. Чем подробнее, тем лучше!
+          </p>
+        </div>
+
+        {/* File Upload Placeholder */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Скриншоты или аудио (опционально)
+          </label>
+          <div className="border-2 border-dashed border-[#F7E7CE] rounded-2xl p-8 text-center bg-[#FAF0E6]/30">
+            <Upload className="w-10 h-10 mx-auto mb-3 text-gray-400" />
+            <p className="text-sm text-gray-600">
+              Функция загрузки файлов скоро будет доступна
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              JPG, PNG, MP3 до 10MB
+            </p>
+          </div>
+        </div>
+
+        {/* Submit Button */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Отправка...</span>
+              </>
+            ) : (
+              <>
+                <span>✅ Отправить сообщение</span>
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="btn-secondary"
+          >
+            Отмена
+          </button>
+        </div>
+
+        {/* Info */}
+        <div className="p-4 bg-[#FFF8E7] rounded-xl border border-[#DEB887]">
+          <p className="text-xs text-gray-700 leading-relaxed">
+            <strong>Важно:</strong> Ваше сообщение будет проверено сообществом через голосование (лайки/дизлайки).
+            Мы не несем ответственности за достоверность данных. Не добавляйте ложную информацию!
+          </p>
         </div>
       </div>
-
-      <button
-        type="submit"
-        disabled={loading || !acceptedDisclaimer}
-        className="w-full bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-      >
-        {loading ? 'Отправка...' : 'Отправить отчет'}
-      </button>
     </form>
   )
 }

@@ -170,3 +170,4 @@ test.describe('Privacy Page', () => {
     await expect(emailLink).toBeVisible()
   })
 })
+

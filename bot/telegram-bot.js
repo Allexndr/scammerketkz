@@ -289,3 +289,4 @@ bot.on('callback_query', async (query) => {
 console.log('🤖 AntiScamKZ Telegram Bot is running...')
 
 
+

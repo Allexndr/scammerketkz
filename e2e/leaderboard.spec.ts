@@ -196,3 +196,4 @@ test.describe('Leaderboard Page', () => {
     await expect(h1).toBeVisible()
   })
 })
+

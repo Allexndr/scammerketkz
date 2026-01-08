@@ -154,3 +154,4 @@ test.describe('Report Page', () => {
     await expect(page).toHaveURL(/\/$/)
   })
 })
+

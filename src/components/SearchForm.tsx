@@ -1,120 +1,74 @@
-'use client'
-
-import { useState } from 'react'
-import { Search } from 'lucide-react'
-
-interface SearchResult {
-  _id: string
-  phoneNumber: string
-  gender: string
-  company: string
-  scamType: string
-  region: string
-  description: string
-  likes: number
-  dislikes: number
-  isVerified: boolean
-  verificationRate: number
-  reportedBy: { name: string; rank: string }
-  createdAt: string
-  commentCount: number
-}
+import { useState, useEffect } from 'react'
+import { Search, Building2, Phone } from 'lucide-react'
 
 export default function SearchForm() {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<SearchResult[]>([])
-  const [loading, setLoading] = useState(false)
-  const [searched, setSearched] = useState(false)
+    const [query, setQuery] = useState('')
+    const [type, setType] = useState<'phone' | 'company'>('phone')
+    const [totalRecords, setTotalRecords] = useState<number | null>(null)
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!query.trim()) return
+    useEffect(() => {
+        fetch('/api/stats')
+            .then(res => res.json())
+            .then(data => setTotalRecords(data.totalScams))
+            .catch(err => console.error(err))
+    }, [])
 
-    setLoading(true)
-    try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
-      const data = await response.json()
-      setResults(data.results || [])
-      setSearched(true)
-    } catch (error) {
-      console.error('Search error:', error)
-      setResults([])
-    } finally {
-      setLoading(false)
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!query.trim()) return
+
+        // Use query params to trigger search results display in a modal or list
+        window.location.href = `/?q=${encodeURIComponent(query)}&type=${type}&view=search`
     }
-  }
 
-  return (
-    <div>
-      <form onSubmit={handleSearch} className="flex gap-2 mb-6">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Введите номер телефона или название компании..."
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-        >
-          <Search size={20} />
-          {loading ? 'Поиск...' : 'Найти'}
-        </button>
-      </form>
-
-      {searched && (
-        <div className="space-y-4">
-          {results.length === 0 ? (
-            <div className="text-center text-gray-500 py-8">
-              {loading ? 'Ищем...' : 'Ничего не найдено'}
+    return (
+        <form onSubmit={handleSubmit} className="w-full flex flex-col items-center gap-6">
+            <div className="flex gap-2 p-1 bg-[#F0F0EB] rounded-lg">
+                <button
+                    type="button"
+                    onClick={() => setType('phone')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all text-xs font-bold uppercase tracking-wider ${type === 'phone' ? 'bg-[#111111] text-white' : 'text-[#444444] hover:bg-white/50'
+                        }`}
+                >
+                    <Phone className="w-3.5 h-3.5" />
+                    По номеру
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setType('company')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all text-xs font-bold uppercase tracking-wider ${type === 'company' ? 'bg-[#111111] text-white' : 'text-[#444444] hover:bg-white/50'
+                        }`}
+                >
+                    <Building2 className="w-3.5 h-3.5" />
+                    По компании
+                </button>
             </div>
-          ) : (
-            results.map((result) => (
-              <div key={result._id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <span className="font-semibold text-lg">{result.phoneNumber}</span>
-                    <span className={`ml-2 px-2 py-1 rounded text-xs ${
-                      result.isVerified
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {result.isVerified ? 'Верифицировано' : 'Не проверено'}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex gap-2 text-sm">
-                      <span className="text-green-600">👍 {result.likes}</span>
-                      <span className="text-red-600">👎 {result.dislikes}</span>
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {result.verificationRate}% подтверждений
-                    </div>
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2 text-sm">
-                  <div><strong>Компания:</strong> {result.company}</div>
-                  <div><strong>Тип:</strong> {result.scamType === 'phishing' ? 'Фишинг' :
-                    result.scamType === 'fake_sale' ? 'Фейковая продажа' :
-                    result.scamType === 'crypto' ? 'Крипто' : 'Другое'}</div>
-                  <div><strong>Регион:</strong> {result.region}</div>
-                  <div><strong>Сообщил:</strong> {result.reportedBy?.name || 'Anonymous'}</div>
-                </div>
+            <div className="w-full relative group">
+                <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={type === 'phone' ? "Введите номер телефона..." : "Название организации..."}
+                    className="w-full px-6 py-5 rounded-none border border-[#E0E0D8] bg-white text-[#111111] text-xl outline-none focus:border-[#A6845B] transition-all text-center shadow-sm group-hover:shadow-md"
+                />
+                <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-300 w-6 h-6" />
+            </div>
 
-                <p className="text-gray-700 mb-2">{result.description}</p>
+            <button
+                type="submit"
+                disabled={!query.trim()}
+                className="btn-primary px-16 py-4 text-lg min-w-[280px] border-b-4 border-black/20 hover:border-bronze disabled:opacity-50"
+            >
+                Найти в базе
+            </button>
 
-                <div className="text-xs text-gray-500">
-                  {new Date(result.createdAt).toLocaleDateString('ru-RU')}
-                  {result.commentCount > 0 && ` • ${result.commentCount} комментариев`}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-    </div>
-  )
+            <div className="flex flex-col items-center gap-2">
+                <p className="text-[10px] text-[#A6845B] font-bold uppercase tracking-[0.2em]">
+                    Проверка по {totalRecords !== null ? totalRecords.toLocaleString() : '...'} записям
+                </p>
+            </div>
+        </form>
+    )
 }
+
