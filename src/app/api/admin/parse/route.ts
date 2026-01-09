@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
         const allData = [...blacklist, ...spamDump]
 
         // 1. Process local blacklist (simulating parsing from file/web)
-        for (const item of allData) {
+        for (const item of allData as any[]) {
             const exists = await Scam.findOne({ phoneNumber: item.phone })
 
             if (!exists) {
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
                     phoneNumber: item.phone,
                     company: item.name,
                     scamType: typeMap[item.type] || 'other',
-                    description: `Официально внесен в черный список. Источник: ${item.source}. Статус: ${item.status}`,
+                    description: `Официально внесен в черный список. Источник: ${item.source}. Статус: ${item.status || 'confirmed'}`,
                     likes: 100, // Высокий рейтинг подтверждения
                     dislikes: 0,
                     region: 'KZ',
