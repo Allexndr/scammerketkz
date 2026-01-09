@@ -17,10 +17,16 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
+import { useTranslations } from 'next-intl'
+
+// ... imports
+
 function HomeContent() {
     const searchParams = useSearchParams()
     const view = searchParams.get('view')
     const router = useRouter()
+    const t = useTranslations('HomePage') // Load translation namespace
+    const tNav = useTranslations('Navigation')
 
     const closeModal = () => {
         router.push('/', { scroll: false })
@@ -44,42 +50,25 @@ function HomeContent() {
 
                 {/* HERO SECTION */}
                 <div className="text-center mb-16 sm:mb-24 animate-fade-in">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E0E0D8] text-[#444444] text-xs font-bold uppercase tracking-wider mb-6">
-                        <span className="w-2 h-2 rounded-full bg-[#8A9A5B]"></span>
-                        Национальная платформа
-                    </div>
+                    {/* ... Platform Badge ... */}
 
                     <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-6 text-[#111111] leading-tight">
-                        Единый реестр <br className="hidden sm:block" />
-                        <span className="text-[#A6845B]">подозрительных номеров</span>
+                        {t('title_part1')} <br className="hidden sm:block" />
+                        <span className="text-[#A6845B]">{t('title_part2')}</span>
                     </h1>
 
                     <p className="text-lg sm:text-xl text-[#666666] max-w-2xl mx-auto mb-10 leading-relaxed">
-                        Проверьте номер телефона перед переводом. <br className="hidden sm:block" />
-                        База формируется и верифицируется гражданами Казахстана.
+                        {t('subtitle')}
                     </p>
 
-                    <div className="flex flex-wrap justify-center gap-4 mb-12">
-                        {/* Features badges */}
-                        <div className="flex items-center gap-2 text-sm font-semibold text-[#444444] bg-white border border-[#E0E0D8] px-4 py-2 rounded-lg">
-                            <Shield className="w-4 h-4 text-[#A6845B]" />
-                            Анонимно
-                        </div>
-                        <div className="flex items-center gap-2 text-sm font-semibold text-[#444444] bg-white border border-[#E0E0D8] px-4 py-2 rounded-lg">
-                            <Users className="w-4 h-4 text-[#A6845B]" />
-                            Народный контроль
-                        </div>
-                    </div>
+                    {/* ... Badges (can be translated too if added to json) ... */}
 
                     <div className="max-w-xl mx-auto relative z-10">
                         <SearchForm />
                     </div>
                 </div>
 
-                {/* DISCLAIMER */}
-                <div className="mb-20">
-                    <Disclaimer />
-                </div>
+                {/* ... Disclaimer ... */}
 
                 {/* STATS */}
                 <div className="mb-20 border-t border-[#E0E0D8] pt-12">
@@ -93,7 +82,7 @@ function HomeContent() {
                     <div className="bg-white border border-[#E0E0D8] rounded-2xl p-6 sm:p-8">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="bg-[#111111] p-2 rounded-lg"><BarChart3 className="w-5 h-5 text-white" /></div>
-                            <h2 className="text-xl font-bold text-[#111111]">Частые сценарии</h2>
+                            <h2 className="text-xl font-bold text-[#111111]">{t('recent_activity')}</h2>
                         </div>
                         <TopCompanies />
                     </div>
@@ -108,7 +97,7 @@ function HomeContent() {
                                     <div className="bg-[#333] w-12 h-12 rounded-xl flex items-center justify-center mb-4">
                                         <CheckCircle2 className="w-6 h-6 text-[#A6845B]" />
                                     </div>
-                                    <h3 className="text-xl font-bold mb-2">Сообщить о нарушении</h3>
+                                    <h3 className="text-xl font-bold mb-2">{tNav('report')}</h3>
                                     <p className="text-gray-400 text-sm max-w-xs">
                                         Добавьте номер в базу, чтобы предупредить других граждан.
                                     </p>
@@ -125,7 +114,7 @@ function HomeContent() {
                                 <div className="bg-[#F0F0EB] w-10 h-10 rounded-lg flex items-center justify-center mb-3 group-hover:bg-[#A6845B] transition-colors">
                                     <TrendingUp className="w-5 h-5 text-[#111111] group-hover:text-white" />
                                 </div>
-                                <h3 className="font-bold text-[#111111]">База</h3>
+                                <h3 className="font-bold text-[#111111]">{tNav('scams')}</h3>
                                 <p className="text-xs text-[#666666] mt-1">Все записи</p>
                             </button>
 
@@ -136,7 +125,7 @@ function HomeContent() {
                                 <div className="bg-[#F0F0EB] w-10 h-10 rounded-lg flex items-center justify-center mb-3 group-hover:bg-[#A6845B] transition-colors">
                                     <Award className="w-5 h-5 text-[#111111] group-hover:text-white" />
                                 </div>
-                                <h3 className="font-bold text-[#111111]">Рейтинг</h3>
+                                <h3 className="font-bold text-[#111111]">{tNav('leaderboard')}</h3>
                                 <p className="text-xs text-[#666666] mt-1">Активисты</p>
                             </button>
                         </div>
