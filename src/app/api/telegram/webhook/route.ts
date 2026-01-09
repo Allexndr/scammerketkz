@@ -20,13 +20,21 @@ async function sendMessage(chatId: number, text: string, parseMode: string = 'HT
     })
 }
 
+// ... imports
+export const maxDuration = 10; // Allow function to run up to 10s (Vercel limit for free)
+
 export async function POST(req: NextRequest) {
+    console.log('🤖 Telegram Webhook received request')
+
     if (!BOT_TOKEN) {
+        console.error('❌ BOT_TOKEN is missing')
         return NextResponse.json({ error: 'Bot token not configured' }, { status: 500 })
     }
 
     try {
         const update = await req.json()
+        console.log('📦 Update:', JSON.stringify(update).substring(0, 100))
+        // ...
 
         // Handle only messages
         if (!update.message || !update.message.text) {
