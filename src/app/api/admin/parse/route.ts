@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/mongodb'
 import Scam from '@/lib/models/Scam'
 import blacklist from '@/lib/blacklist.json'
+import spamDump from '@/lib/spam_dump_ru_kz.json'
 // import User from '@/lib/models/User'
 
 export const dynamic = 'force-dynamic'
@@ -11,8 +12,7 @@ export async function POST(req: NextRequest) {
         await connectDB()
 
         // In real world, check if admin
-        // const session = await getServerSession(authOptions)
-        // if (session?.user?.email !== 'admin@scammerket.kz') return 403...
+        // ...
 
         const results = []
 
@@ -20,11 +20,15 @@ export async function POST(req: NextRequest) {
             'financial_pyramid': 'pyramid',
             'phishing': 'phishing',
             'vishing': 'vishing',
-            'spam': 'spam'
+            'spam': 'spam',
+            'pyramid': 'pyramid',
+            'other': 'other'
         }
 
+        const allData = [...blacklist, ...spamDump]
+
         // 1. Process local blacklist (simulating parsing from file/web)
-        for (const item of blacklist) {
+        for (const item of allData) {
             const exists = await Scam.findOne({ phoneNumber: item.phone })
 
             if (!exists) {
