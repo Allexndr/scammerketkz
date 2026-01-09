@@ -10,7 +10,7 @@ export default function LanguageSwitcher() {
     const [isOpen, setIsOpen] = useState(false)
 
     const toggleLanguage = (locale: string) => {
-        router.replace(pathname, { locale })
+        router.replace(pathname, { locale: locale as any })
         setIsOpen(false)
     }
 

@@ -134,7 +134,7 @@ export function checkRateLimit(
  */
 setInterval(() => {
     const now = Date.now()
-    for (const [key, record] of requestCounts.entries()) {
+    for (const [key, record] of Array.from(requestCounts.entries())) {
         if (now > record.resetAt) {
             requestCounts.delete(key)
         }

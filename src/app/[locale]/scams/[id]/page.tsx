@@ -22,6 +22,7 @@ interface ScamDetails {
     createdAt: string
     reportedBy: { name: string; rank: string }
     comments: any[]
+    gender?: string
 }
 
 export default function ScamDetailsPage() {

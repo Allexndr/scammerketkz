@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import dbConnect from '@/lib/dbConnect'
-import User from '@/models/User'
+import connectDB from '@/lib/mongodb'
+import User from '@/lib/models/User'
 
 export async function GET(request: NextRequest) {
   try {
-    await dbConnect()
+    await connectDB()
 
     const { searchParams } = new URL(request.url)
     const filter = searchParams.get('filter') || 'all'
