@@ -1,4 +1,3 @@
-```typescript
 import mongoose from 'mongoose'
 
 export interface IUser extends mongoose.Document {
@@ -14,7 +13,7 @@ export interface IUser extends mongoose.Document {
   rank: string
   createdAt: Date
   updatedAt: Date
-  votes: mongoose.Types.ObjectId[] // scam IDs they've voted on
+  votes: mongoose.Types.ObjectId[]
   reportsCount: number
   apiKeys?: {
     key: string;
@@ -30,7 +29,7 @@ const UserSchema = new mongoose.Schema<IUser>({
     type: String,
     required: false,
     unique: true,
-    sparse: true, // Allow multiple null/undefined values
+    sparse: true,
     lowercase: true,
     trim: true
   },
@@ -63,7 +62,7 @@ const UserSchema = new mongoose.Schema<IUser>({
   },
   password: {
     type: String,
-    required: false // for social auth
+    required: false
   },
   points: {
     type: Number,
@@ -77,11 +76,16 @@ const UserSchema = new mongoose.Schema<IUser>({
   votes: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Scam'
+  }],
+  apiKeys: [{
+    key: String,
+    name: String,
+    createdAt: Date,
+    lastUsed: Date,
+    isActive: Boolean
   }]
 }, {
   timestamps: true
 })
-
-// Note: Rank is updated in API routes
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema)

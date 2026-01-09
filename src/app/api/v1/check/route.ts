@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import connectDB from '@/lib/db'
+import connectDB from '@/lib/mongodb'
 import User from '@/lib/models/User'
 import Scam from '@/lib/models/Scam'
 import blacklist from '@/lib/blacklist.json'
