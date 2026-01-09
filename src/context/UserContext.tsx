@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { useSession, signOut } from "next-auth/react"
 
 type Rank = 'Новичок' | 'Охотник' | 'Эксперт' | 'Легенда'
 
@@ -41,15 +42,30 @@ const getRank = (points: number): Rank => {
 }
 
 export function UserProvider({ children }: { children: ReactNode }) {
+    const { data: session } = useSession()
     const [user, setUser] = useState<User | null>(null)
 
     useEffect(() => {
-        // Restore session
+        // Sync with NextAuth session
+        if (session?.user && !user) {
+            setUser({
+                name: session.user.name || 'Пользователь Google',
+                phone: session.user.email || 'Google Account', // Use email as identifier if phone is missing
+                points: 0, // In real app, fetch from DB
+                rank: 'Новичок',
+                reportsCount: 0,
+                reports: []
+            })
+        }
+    }, [session, user])
+
+    useEffect(() => {
+        // Restore session from local storage (legacy phone login)
         const saved = localStorage.getItem('scam_user')
-        if (saved) {
+        if (saved && !session) { // Only restore local if no Google session
             setUser(JSON.parse(saved))
         }
-    }, [])
+    }, [session])
 
     useEffect(() => {
         if (user) {
@@ -94,8 +110,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     }
 
-    const logout = () => {
+    const logout = async () => {
         setUser(null)
+        localStorage.removeItem('scam_user')
+        if (session) {
+            await signOut({ redirect: false })
+        }
     }
 
     const addReportPoints = ({ hasCompany, hasDescription }: { hasCompany: boolean, hasDescription: boolean }) => {
