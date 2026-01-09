@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ThumbsUp, ThumbsDown, User, Shield, AlertTriangle, ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
+import AdSpace from '@/components/AdSpace'
 
 export const dynamic = 'force-dynamic'
 
@@ -173,6 +174,8 @@ export default function ScamDetailsPage() {
                         </div>
                     </div>
                 </div>
+
+                <AdSpace type="native" className="my-8" />
 
                 {/* Comments Section (Placeholder) */}
                 <div className="mt-8">

@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import SearchForm from '@/components/SearchForm'
 import TopCompanies from '@/components/TopCompanies'
 import StatsOverview from '@/components/StatsOverview'
-import Disclaimer from '@/components/Disclaimer'
 import ReportModal from '@/components/ReportModal'
 import LeaderboardModal from '@/components/LeaderboardModal'
 import LegalConsentModal from '@/components/LegalConsentModal'
@@ -14,18 +13,16 @@ import ProfileModal from '@/components/ProfileModal'
 import SearchResultsModal from '@/components/SearchResultsModal'
 import { Shield, TrendingUp, Users, Zap, CheckCircle2, BarChart3, Award, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import AdSpace from '@/components/AdSpace' // <--- Added import
 
 export const dynamic = 'force-dynamic'
-
-import { useTranslations } from 'next-intl'
-
-// ... imports
 
 function HomeContent() {
     const searchParams = useSearchParams()
     const view = searchParams.get('view')
     const router = useRouter()
-    const t = useTranslations('HomePage') // Load translation namespace
+    const t = useTranslations('HomePage')
     const tNav = useTranslations('Navigation')
 
     const closeModal = () => {
@@ -50,8 +47,6 @@ function HomeContent() {
 
                 {/* HERO SECTION */}
                 <div className="text-center mb-16 sm:mb-24 animate-fade-in">
-                    {/* ... Platform Badge ... */}
-
                     <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-6 text-[#111111] leading-tight">
                         {t('title_part1')} <br className="hidden sm:block" />
                         <span className="text-[#A6845B]">{t('title_part2')}</span>
@@ -61,14 +56,10 @@ function HomeContent() {
                         {t('subtitle')}
                     </p>
 
-                    {/* ... Badges (can be translated too if added to json) ... */}
-
                     <div className="max-w-xl mx-auto relative z-10">
                         <SearchForm />
                     </div>
                 </div>
-
-                {/* ... Disclaimer ... */}
 
                 {/* STATS */}
                 <div className="mb-20 border-t border-[#E0E0D8] pt-12">
@@ -76,6 +67,9 @@ function HomeContent() {
                         <StatsOverview />
                     </Suspense>
                 </div>
+
+                {/* ADVERTISEMENT BLOCK */}
+                <AdSpace type="banner" />
 
                 {/* GRID */}
                 <div className="grid lg:grid-cols-2 gap-8 mb-20">
@@ -107,16 +101,16 @@ function HomeContent() {
                         </button>
 
                         <div className="grid grid-cols-2 gap-4 h-full">
-                            <button
-                                // onClick={() => openModal('scams')}
-                                className="bg-white border border-[#E0E0D8] rounded-2xl p-6 hover:border-[#A6845B] transition-colors group text-left"
+                            <Link
+                                href="/scams"
+                                className="bg-white border border-[#E0E0D8] rounded-2xl p-6 hover:border-[#A6845B] transition-colors group text-left block"
                             >
                                 <div className="bg-[#F0F0EB] w-10 h-10 rounded-lg flex items-center justify-center mb-3 group-hover:bg-[#A6845B] transition-colors">
                                     <TrendingUp className="w-5 h-5 text-[#111111] group-hover:text-white" />
                                 </div>
                                 <h3 className="font-bold text-[#111111]">{tNav('scams')}</h3>
                                 <p className="text-xs text-[#666666] mt-1">Все записи</p>
-                            </button>
+                            </Link>
 
                             <button
                                 onClick={() => openModal('leaderboard')}
