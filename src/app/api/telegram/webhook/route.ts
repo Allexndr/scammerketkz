@@ -4,7 +4,9 @@ import User from '@/lib/models/User'
 import Scam from '@/lib/models/Scam'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
-const WEB_APP_URL = 'https://scammerket.vercel.app' // Hardcoded for stability, or use process.env.NEXT_PUBLIC_URL
+const WEB_APP_URL = 'https://scammerket.vercel.app'
+
+export const dynamic = 'force-dynamic' // Ensure this runs dynamically
 
 export async function POST(req: NextRequest) {
     try {
@@ -20,13 +22,12 @@ export async function POST(req: NextRequest) {
 
             // 1. /start command -> Show Web App Button
             if (text === '/start') {
-                // Upsert user
+                // Upsert user to capture basic info
                 await User.findOneAndUpdate(
                     { telegramId: user.id.toString() },
                     {
                         $set: {
                             name: [user.first_name, user.last_name].filter(Boolean).join(' '),
-                            // Don't overwrite role or points if exists
                         },
                         $setOnInsert: {
                             role: 'user',
@@ -37,22 +38,24 @@ export async function POST(req: NextRequest) {
                     { upsert: true, new: true }
                 )
 
-                await sendMessage(chatId, "👋 Добро пожаловать в ScammerKetKz!\n\nЭто полноценная платформа для проверки мошенников и AI-анализа.\n\nНажмите кнопку ниже, чтобы открыть приложение:", {
+                // Sending a photo with the welcome message makes it look "richer"
+                // Using a placeholder image for now, or just text. Let's stick to text for speed.
+                await sendMessage(chatId, `<b>👋 Добро пожаловать, ${user.first_name}!</b>\n\n🛡️ <b>ScammerKetKz</b> — это единая база мошенников Казахстана с AI-анализом.\n\n👇 <b>Нажмите большую кнопку ниже, чтобы начать проверку:</b>`, {
                     reply_markup: {
                         inline_keyboard: [
-                            [{ text: "📱 Открыть ScammerKet App", web_app: { url: WEB_APP_URL } }],
-                            [{ text: "🌐 Перейти на сайт", url: WEB_APP_URL }]
+                            [{ text: "🚀 Запустить ScammerKet", web_app: { url: WEB_APP_URL } }],
+                            [{ text: "🌐 Наш официальный сайт", url: WEB_APP_URL }]
                         ]
                     }
                 })
                 return NextResponse.json({ ok: true })
             }
 
-            // 2. Fallback for text messages
-            await sendMessage(chatId, "Используйте кнопку ниже, чтобы открыть полное приложение.", {
+            // 2. Any other text
+            await sendMessage(chatId, "⚠️ Бот работает только через <b>Web App</b>.\nНажмите кнопку <b>«Запустить»</b> ниже или в меню слева.", {
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: "📱 Открыть App", web_app: { url: WEB_APP_URL } }]
+                        [{ text: "📱 Открыть приложение", web_app: { url: WEB_APP_URL } }]
                     ]
                 }
             })
