@@ -6,6 +6,7 @@ import Navigation from '@/components/Navigation';
 import { UserProvider } from '@/context/UserContext';
 import NextAuthProvider from '@/components/NextAuthProvider';
 import '../globals.css';
+import Navbar from '@/components/Navbar';
 
 export const metadata = {
     title: 'ScammerKetKz - Платформа проверки номеров',
@@ -28,10 +29,10 @@ export default async function LocaleLayout({
     return (
         <html lang={locale}>
             <body className="antialiased min-h-screen pt-20">
-                <NextIntlClientProvider messages={messages}>
+                <NextIntlClientProvider locale={locale} messages={messages}>
                     <NextAuthProvider>
                         <UserProvider>
-                            <Navigation />
+                            <Navbar />
                             {children}
                         </UserProvider>
                     </NextAuthProvider>
