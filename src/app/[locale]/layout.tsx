@@ -7,6 +7,7 @@ import { UserProvider } from '@/context/UserContext';
 import NextAuthProvider from '@/components/NextAuthProvider';
 import '../globals.css';
 import Navbar from '@/components/Navbar';
+import TelegramProvider from '@/components/TelegramProvider';
 
 export const metadata = {
     title: 'ScammerKetKz - Платформа проверки номеров',
@@ -39,8 +40,10 @@ export default async function LocaleLayout({
                 <NextIntlClientProvider locale={locale} messages={messages}>
                     <NextAuthProvider>
                         <UserProvider>
-                            <Navbar />
-                            {children}
+                            <TelegramProvider>
+                                <Navbar />
+                                {children}
+                            </TelegramProvider>
                         </UserProvider>
                     </NextAuthProvider>
                 </NextIntlClientProvider>

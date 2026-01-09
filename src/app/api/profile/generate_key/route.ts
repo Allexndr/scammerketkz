@@ -13,7 +13,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        await connectDB()
+        const user = await User.findOne({ email: session.user.email })
+        if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+        // Security Audit: Rate Limit Key Gen
+        const lastKey = user.apiKeys?.[user.apiKeys.length - 1]
+        if (lastKey && (new Date().getTime() - new Date(lastKey.createdAt).getTime() < 60000)) {
+            return NextResponse.json({ error: 'Please wait 1 minute before generating a new key.' }, { status: 429 })
+        }
 
         // Generate a random key like sk_live_...
         const randomPart = crypto.randomBytes(24).toString('hex')

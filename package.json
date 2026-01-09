@@ -10,6 +10,7 @@
     },
     "dependencies": {
         "@google/generative-ai": "^0.24.1",
+        "@twa-dev/sdk": "^8.0.2",
         "date-fns": "^4.1.0",
         "lucide-react": "^0.294.0",
         "mongoose": "^9.1.2",
