@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode, Dispatch, SetStateAction } from 'react'
 import { useSession, signOut } from "next-auth/react"
 
 type Rank = 'Новичок' | 'Охотник' | 'Эксперт' | 'Легенда'
@@ -14,9 +14,17 @@ export interface User {
     telegramId?: string;
     points: number;
     rank: string;
-    role: 'user' | 'admin' | 'moderator'; // Исправляем тип роли
+    role: 'user' | 'admin' | 'moderator';
     reportsCount: number;
-    reports: string[];
+    // Hybrid type: can be full objects (local) or strings (from basic DB fetch)
+    // We will normalize to objects where possible
+    reports: Array<{
+        id: string; // or just string if it's an ID
+        phone?: string;
+        date: string;
+        pointsEarned?: number;
+        status?: string;
+    } | any>;
     apiKeys?: {
         key: string;
         name: string;
@@ -34,6 +42,7 @@ interface UserContextType {
     login: (phone: string, name?: string) => void
     logout: () => void
     addReportPoints: (details: { hasCompany: boolean, hasDescription: boolean }) => void
+    setUser: Dispatch<SetStateAction<User | null>> // <--- EXPOSED NOW
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
@@ -58,24 +67,24 @@ export function UserProvider({ children }: { children: ReactNode }) {
         if (status === 'authenticated' && session?.user) {
             // Optimistic update
             setUser(prev => ({
-                ...prev,
-                name: session.user.name || prev?.name || 'Пользователь Google',
-                email: session.user.email || prev?.email,
-                image: session.user.image || prev?.image,
+                name: session?.user?.name || prev?.name || 'Пользователь Google',
+                email: session?.user?.email || prev?.email,
+                image: session?.user?.image || prev?.image,
                 role: 'user', // Default role
                 points: prev?.points || 0,
                 rank: prev?.rank || 'Новичок',
                 reportsCount: prev?.reportsCount || 0,
                 reports: [],
-                apiKeys: []
-            } as User)) // Cast to User to satisfy type, as prev might be null
+                apiKeys: [],
+                ...prev // Keep existing valid data if any
+            } as User))
 
             // Fetch full profile from DB
             fetch('/api/profile/me')
                 .then(res => res.json())
                 .then(data => {
                     if (data && !data.error) {
-                        setUser(data)
+                        setUser(prev => ({ ...prev!, ...data }))
                     }
                 })
                 .catch(err => console.error('Failed to load profile', err))
@@ -86,7 +95,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
         // Restore session from local storage (legacy phone login)
         const saved = localStorage.getItem('scam_user')
         if (saved && !session) { // Only restore local if no Google session
-            setUser(JSON.parse(saved))
+            try {
+                setUser(JSON.parse(saved))
+            } catch (e) {
+                localStorage.removeItem('scam_user')
+            }
         }
     }, [session])
 
@@ -99,27 +112,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }, [user])
 
     const login = (phone: string, name?: string) => {
-        // Check if this is the Admin user
+        // Check if this is the Admin user (Emulator)
         if (phone === 'Admin' || phone === 'admin' || phone === '+77777777777') {
             setUser({
                 name: 'Админ',
                 phone: '+7 (777) 777-77-77',
-                points: 250, // 10 reports × 25 points each
+                points: 250,
                 rank: 'Легенда',
+                role: 'admin',
                 reportsCount: 10,
                 reports: [
                     { id: '10', phone: '+77053341201', date: '2025-12-20', pointsEarned: 25, status: 'verified' },
                     { id: '9', phone: '+77052015923', date: '2025-12-19', pointsEarned: 25, status: 'verified' },
-                    { id: '8', phone: '+77710007722', date: '2025-12-18', pointsEarned: 25, status: 'verified' },
-                    { id: '7', phone: '+77719310492', date: '2025-12-17', pointsEarned: 25, status: 'verified' },
-                    { id: '6', phone: '+77476800210', date: '2025-12-16', pointsEarned: 25, status: 'verified' },
-                    { id: '5', phone: '+77772585777', date: '2025-12-15', pointsEarned: 25, status: 'verified' },
-                    { id: '4', phone: '+77172554440', date: '2025-12-14', pointsEarned: 25, status: 'verified' },
-                    { id: '3', phone: '+77772950777', date: '2025-12-13', pointsEarned: 25, status: 'verified' },
-                    { id: '2', phone: '+77772597777', date: '2025-12-12', pointsEarned: 25, status: 'verified' },
-                    { id: '1', phone: '+77273645155', date: '2025-12-11', pointsEarned: 25, status: 'verified' },
                 ]
-            })
+            } as User)
         } else {
             // Regular user
             setUser({
@@ -127,9 +133,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 phone,
                 points: 0,
                 rank: 'Новичок',
+                role: 'user',
                 reportsCount: 0,
                 reports: []
-            })
+            } as User)
         }
     }
 
@@ -153,7 +160,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
         const newReport = {
             id: Date.now().toString(),
-            phone: '+7 (xxx) xxx-xx-xx', // In real app, pass actual phone
+            phone: '+7 (xxx) xxx-xx-xx',
             date: new Date().toISOString(),
             pointsEarned: earned,
             status: 'pending' as const
@@ -169,7 +176,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
 
     return (
-        <UserContext.Provider value={{ user, isLoggedIn: !!user, login, logout, addReportPoints }}>
+        <UserContext.Provider value={{ user, isLoggedIn: !!user, login, logout, addReportPoints, setUser }}>
             {children}
         </UserContext.Provider>
     )
