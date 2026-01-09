@@ -5,19 +5,27 @@ import { useSession, signOut } from "next-auth/react"
 
 type Rank = 'Новичок' | 'Охотник' | 'Эксперт' | 'Легенда'
 
-interface User {
-    name: string
-    phone: string
-    points: number
-    rank: Rank
-    reportsCount: number
-    reports: Array<{
-        id: string
-        phone: string
-        date: string
-        pointsEarned: number
-        status: 'pending' | 'verified'
-    }>
+// Basic User Type for Context
+export interface User {
+    name: string;
+    email?: string;
+    phone?: string;
+    image?: string;
+    telegramId?: string;
+    points: number;
+    rank: string;
+    role: 'user' | 'admin' | 'moderator'; // Исправляем тип роли
+    reportsCount: number;
+    reports: string[];
+    apiKeys?: {
+        key: string;
+        name: string;
+        createdAt: string;
+        lastUsed?: string;
+        isActive: boolean;
+        limit?: number;
+        usage?: number;
+    }[];
 }
 
 interface UserContextType {
