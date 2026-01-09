@@ -82,7 +82,9 @@ const UserSchema = new mongoose.Schema<IUser>({
     name: String,
     createdAt: Date,
     lastUsed: Date,
-    isActive: Boolean
+    isActive: Boolean,
+    usage: { type: Number, default: 0 },
+    limit: { type: Number, default: 100 } // Бесплатный лимит
   }]
 }, {
   timestamps: true

@@ -13,6 +13,13 @@ export const metadata = {
     description: 'Проверьте номер телефона на наличие жалоб. Единая база отзывов Казахстана.',
 };
 
+export const viewport = {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false, // Важно для TWA, чтобы не зумилось
+}
+
 export default async function LocaleLayout({
     children,
     params: { locale }

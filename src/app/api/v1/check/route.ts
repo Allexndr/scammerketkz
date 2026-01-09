@@ -30,11 +30,26 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized', message: 'Invalid API Key' }, { status: 401 })
         }
 
+        // Check Limits
+        const keyData = user.apiKeys.find((k: any) => k.key === apiKey)
+        if (keyData) {
+            // limit -1 means infinite
+            if (keyData.limit !== -1 && (keyData.usage || 0) >= keyData.limit) {
+                return NextResponse.json({
+                    error: 'Payment Required',
+                    message: 'API Request Limit Reached (100/100). Upgrade plan at /business'
+                }, { status: 403 })
+            }
+        }
+
         // Update usage stat (fire and forget)
-        User.updateOne(
+        await User.updateOne(
             { _id: user._id, 'apiKeys.key': apiKey },
-            { $set: { 'apiKeys.$.lastUsed': new Date() } }
-        ).exec()
+            {
+                $set: { 'apiKeys.$.lastUsed': new Date() },
+                $inc: { 'apiKeys.$.usage': 1 }
+            }
+        )
 
         // 2. Parse Input
         const body = await req.json()
@@ -65,7 +80,6 @@ export async function POST(req: NextRequest) {
         }
 
         // 4. Check Community Database (MongoDB)
-        // Adjust regex to be flexible
         const scam = await Scam.findOne({
             phoneNumber: { $regex: cleanPhone }
         })
