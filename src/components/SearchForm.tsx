@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import { Search, Building2, Phone } from 'lucide-react'
 

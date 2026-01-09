@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link';
 import { ShieldAlert } from 'lucide-react';
 import SearchForm from '@/components/SearchForm';
