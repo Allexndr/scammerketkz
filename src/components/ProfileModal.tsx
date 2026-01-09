@@ -122,21 +122,21 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                {user.reports.map((report) => (
-                                    <div key={report.id} className="bg-white p-4 rounded-xl border border-[#E0E0D8] flex items-center justify-between">
-                                        <div>
-                                            <div className="font-bold text-[#111111]">Отчет #{report.id.slice(-4)}</div>
-                                            <div className="text-xs text-gray-500">{new Date(report.date).toLocaleDateString()}</div>
+                                {user.reports && user.reports.length > 0 ? (
+                                    user.reports.map((reportId, index) => (
+                                        <div key={index} className="bg-white p-4 rounded-xl border border-[#E0E0D8] flex items-center justify-between">
+                                            <div>
+                                                <div className="font-bold text-[#111111]">Отчет #{typeof reportId === 'string' ? reportId.slice(-4) : 'ID'}</div>
+                                                <div className="text-xs text-gray-500">Статус: На проверке</div>
+                                            </div>
+                                            <div className="bg-[#F0F0EB] px-3 py-1 rounded text-xs font-bold text-[#A6845B]">
+                                                +15 XP
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className={`px-2 py-1 rounded text-xs font-bold ${report.status === 'verified' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                                                }`}>
-                                                {report.status === 'verified' ? 'Подтвержден' : 'На проверке'}
-                                            </span>
-                                            <span className="font-bold text-[#A6845B]">+{report.pointsEarned}</span>
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))
+                                ) : (
+                                    <div className="text-center text-gray-400 py-4">Нет активных отчетов</div>
+                                )}
                             </div>
                         )}
                     </div>
