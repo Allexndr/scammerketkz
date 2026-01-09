@@ -118,7 +118,7 @@ export default function ProfileModal({ onClose }: { onClose: () => void }) {
                         {user.reports.length === 0 ? (
                             <div className="text-center py-8 bg-white rounded-xl border border-[#E0E0D8] border-dashed">
                                 <TrendingUp className="w-8 h-8 text-[#CCCCCC] mx-auto mb-2" />
-                                <p className="text-gray-400 text-sm">Пока нет активности. Сообщите о мошеннике!</p>
+                                <p className="text-gray-400 text-sm">Пока нет активности. Сообщите о нарушении!</p>
                             </div>
                         ) : (
                             <div className="space-y-3">

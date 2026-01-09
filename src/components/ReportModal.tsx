@@ -27,7 +27,7 @@ export default function ReportModal({ onClose }: { onClose: () => void }) {
                 hasCompany: !!finalCompany,
                 hasDescription: formData.description.length > 20
             })
-            alert(`Отчет отправлен! Вам начислены очки за сообщение о ${finalCompany || 'мошеннике'}.`)
+            alert(`Отчет отправлен! Вам начислены очки за сообщение о ${finalCompany || 'нарушении'}.`)
         } else {
             alert('Отчет отправлен! Войдите в аккаунт, чтобы получать очки и повышать рейтинг.')
         }
@@ -41,7 +41,7 @@ export default function ReportModal({ onClose }: { onClose: () => void }) {
                 <div className="sticky top-0 bg-[#F9F9F7]/95 backdrop-blur-md border-b border-[#E0E0D8] p-4 flex items-center justify-between z-10">
                     <h2 className="text-xl font-bold text-[#111111] flex items-center gap-2">
                         <AlertTriangle className="w-5 h-5 text-[#A6845B]" />
-                        Сообщить о мошеннике
+                        Сообщить о нарушении
                     </h2>
                     <button onClick={onClose} className="p-2 hover:bg-[#F0F0EB] rounded-lg">
                         <X className="w-6 h-6 text-[#444444]" />
@@ -51,7 +51,7 @@ export default function ReportModal({ onClose }: { onClose: () => void }) {
                 <div className="p-6 sm:p-8">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <label className="block text-sm font-bold text-[#444444] mb-2">Номер телефона мошенника</label>
+                            <label className="block text-sm font-bold text-[#444444] mb-2">Номер телефона звонившего</label>
                             <input
                                 type="tel"
                                 required
@@ -105,7 +105,7 @@ export default function ReportModal({ onClose }: { onClose: () => void }) {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-[#444444] mb-2">Тип мошенничества</label>
+                                <label className="block text-sm font-bold text-[#444444] mb-2">Категория нарушения</label>
                                 <select
                                     className="input-paper"
                                     value={formData.fraudType}
@@ -127,7 +127,7 @@ export default function ReportModal({ onClose }: { onClose: () => void }) {
                                 rows={4}
                                 required
                                 className="input-paper resize-none"
-                                placeholder="Опишите, что именно говорил мошенник, какие данные запрашивал..."
+                                placeholder="Опишите, что именно говорил звонящий, какие данные запрашивал..."
                                 value={formData.description}
                                 onChange={e => setFormData({ ...formData, description: e.target.value })}
                             ></textarea>

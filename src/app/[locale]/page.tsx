@@ -51,7 +51,7 @@ function HomeContent() {
 
                     <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-6 text-[#111111] leading-tight">
                         Единый реестр <br className="hidden sm:block" />
-                        <span className="text-[#A6845B]">мошеннических номеров</span>
+                        <span className="text-[#A6845B]">подозрительных номеров</span>
                     </h1>
 
                     <p className="text-lg sm:text-xl text-[#666666] max-w-2xl mx-auto mb-10 leading-relaxed">

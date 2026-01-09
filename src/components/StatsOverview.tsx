@@ -57,7 +57,7 @@ export default function StatsOverview() {
         },
         {
             icon: Building2,
-            label: 'Компаний-мошенников',
+            label: 'Компаний с жалобами',
             value: stats.totalCompanies,
             color: 'from-[#BC8F8F] to-[#A57C7C]',
             bgColor: 'bg-[#F8F0F0]',

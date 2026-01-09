@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 
 const titles = [
-    "Мошенник уходи! 🛡️", // Russian
+    "Стоп Спам! 🛡️", // Russian
     "Алаяқ кет! 🛡️", // Kazakh
     "Scammer Go Away! 🛡️", // English
 ]

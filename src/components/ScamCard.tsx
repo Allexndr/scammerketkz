@@ -45,9 +45,9 @@ export default function ScamCard({ scam }: ScamCardProps) {
                     </div>
                 </div>
                 <div className={`px-3 py-1 rounded-full text-sm font-medium ${verificationRate >= 70 ? 'bg-red-100 text-red-700' :
-                        verificationRate <= 30 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                    verificationRate <= 30 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
                     }`}>
-                    {verificationRate}% мошенник
+                    {verificationRate}% риск
                 </div>
             </div>
 

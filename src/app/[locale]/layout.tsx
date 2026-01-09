@@ -8,8 +8,8 @@ import NextAuthProvider from '@/components/NextAuthProvider';
 import '../globals.css';
 
 export const metadata = {
-    title: 'ScammerKetKz - Платформа против мошенничества',
-    description: 'Проверьте номер телефона на мошенничество. Единая база мошенников Казахстана.',
+    title: 'ScammerKetKz - Платформа проверки номеров',
+    description: 'Проверьте номер телефона на наличие жалоб. Единая база отзывов Казахстана.',
 };
 
 export default async function LocaleLayout({

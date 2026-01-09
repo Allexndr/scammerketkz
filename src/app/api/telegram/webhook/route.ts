@@ -66,13 +66,13 @@ export async function POST(req: NextRequest) {
         if (text === '/start') {
             await sendMessage(chatId,
                 `🛡 <b>ScammerKetKz Bot</b>\n\n` +
-                `Я — ваша защита от мошенников. Единая база данных с сайтом.\n\n` +
+                `Я — ваша защита от нежелательных звонков. Единая база данных с сайтом.\n\n` +
                 `🔍 <b>Как проверить номер?</b>\n` +
                 `Просто отправьте мне номер телефона или имя компании.\n\n` +
                 `📊 <b>Команды:</b>\n` +
                 `/stats - Статистика базы\n` +
                 `/me - Мой профиль\n` +
-                `/report - Сообщить о мошеннике (ссылка на сайт)`
+                `/report - Сообщить о нарушении (ссылка на сайт)`
             )
             return NextResponse.json({ ok: true })
         }
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (text === '/report') {
-            await sendMessage(chatId, `📝 Чтобы добавить мошенника, пожалуйста, воспользуйтесь нашим сайтом (это удобнее!):\n\n<a href="https://scammerket-j52f43cbr-alexanders-projects-4dc0852f.vercel.app/?view=report">Перейти к форме отчета</a>`)
+            await sendMessage(chatId, `📝 Чтобы добавить отчет, пожалуйста, воспользуйтесь нашим сайтом (это удобнее!):\n\n<a href="https://scammerket-j52f43cbr-alexanders-projects-4dc0852f.vercel.app/?view=report">Перейти к форме отчета</a>`)
             return NextResponse.json({ ok: true })
         }
 
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
                 response += `🔴 <b>${index + 1}. ${scam.company || 'Неизвестная компания'}</b>\n`
                 response += `📞 ${scam.phoneNumber}\n`
                 response += `💬 ${scam.description.substring(0, 100)}${scam.description.length > 100 ? '...' : ''}\n`
-                response += `👎 Жалоб: ${scam.dislikes + scam.likes} (Рейтинг: ${scam.likes > scam.dislikes ? 'Доверие' : 'Мошенничество'})\n\n`
+                response += `👎 Жалоб: ${scam.dislikes + scam.likes} (Рейтинг: ${scam.likes > scam.dislikes ? 'Доверие' : 'Недоверие'})\n\n`
             })
             await sendMessage(chatId, response)
         }

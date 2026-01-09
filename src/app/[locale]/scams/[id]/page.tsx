@@ -110,7 +110,7 @@ export default function ScamDetailsPage() {
                             <div className="flex flex-col items-end">
                                 <div className={`px-4 py-2 rounded-lg text-lg font-bold mb-2 ${verificationRate >= 70 ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
                                     }`}>
-                                    {verificationRate}% Вероятность мошенничества
+                                    {verificationRate}% Индекс риска
                                 </div>
                                 <div className="text-sm text-gray-500">
                                     {scam.likes} подтверждений / {scam.dislikes} опровержений
@@ -147,7 +147,7 @@ export default function ScamDetailsPage() {
                                 className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-colors font-medium border border-red-200"
                             >
                                 <ThumbsUp size={20} />
-                                Это мошенник ({scam.likes})
+                                Подозрительный ({scam.likes})
                             </button>
                             <button
                                 onClick={() => handleVote('dislike')}

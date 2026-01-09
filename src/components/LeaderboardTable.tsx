@@ -130,7 +130,7 @@ export default function LeaderboardTable() {
           <div className="text-4xl mb-4">🏆</div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Пока нет участников</h3>
           <p className="text-gray-600 mb-6">
-            Будьте первым! Сообщите о мошеннике и заработайте очки.
+            Будьте первым! Сообщите о нарушении и заработайте очки.
           </p>
           <a
             href="/report"
@@ -142,7 +142,7 @@ export default function LeaderboardTable() {
       ) : (
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
           <div className="text-center text-sm text-gray-600">
-            Хотите попасть в рейтинг? <a href="/report" className="text-blue-600 hover:underline">Сообщите о мошеннике</a>
+            Хотите попасть в рейтинг? <a href="/report" className="text-blue-600 hover:underline">Сообщите о нарушении</a>
           </div>
         </div>
       )}

@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
         'Номер телефона',
         'Пол',
         'Компания',
-        'Тип мошенничества',
+        'Категория',
         'Регион',
         'Описание',
         'Лайки',
@@ -69,8 +69,8 @@ export async function GET(request: NextRequest) {
         row.gender === 'male' ? 'Мужской' : row.gender === 'female' ? 'Женский' : 'Неизвестно',
         row.company,
         row.scamType === 'phishing' ? 'Фишинг' :
-        row.scamType === 'fake_sale' ? 'Фейковая продажа' :
-        row.scamType === 'crypto' ? 'Крипто-мошенничество' : 'Другое',
+          row.scamType === 'fake_sale' ? 'Фейковая продажа' :
+            row.scamType === 'crypto' ? 'Подозрительные крипто-операции' : 'Другое',
         row.region,
         `"${row.description.replace(/"/g, '""')}"`,
         row.likes,

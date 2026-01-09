@@ -8,8 +8,8 @@ export default function ScamsPage() {
         <div className="min-h-screen pt-24 pb-16 px-4">
             <div className="container mx-auto max-w-5xl">
                 <div className="text-center mb-10">
-                    <h1 className="text-3xl sm:text-4xl font-black mb-4 text-gradient">База мошенников</h1>
-                    <p className="text-gray-600">Все подтвержденные случаи мошенничества</p>
+                    <h1 className="text-3xl sm:text-4xl font-black mb-4 text-gradient">База отзывов</h1>
+                    <p className="text-gray-600">Все подтвержденные сообщения о нарушениях</p>
                 </div>
 
                 <div className="card-glass mb-8">

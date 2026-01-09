@@ -21,7 +21,7 @@ export default function ReportForm() {
 
   const scamTypes = [
     'Банковский фишинг',
-    'Крипто-мошенничество',
+    'Подозрительные крипто-операции',
     'Фейковая продажа',
     'Лже-сотрудник банка',
     'Инвестиционная пирамида',
@@ -93,7 +93,7 @@ export default function ReportForm() {
         {/* Phone Number */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Номер телефона мошенника <span className="text-[#BC8F8F]">*</span>
+            Номер телефона звонившего <span className="text-[#BC8F8F]">*</span>
           </label>
           <input
             type="tel"
@@ -112,7 +112,7 @@ export default function ReportForm() {
         {/* Gender */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Пол мошенника
+            Пол звонившего
           </label>
           <div className="grid grid-cols-3 gap-3">
             {['Мужчина', 'Женщина', 'Не помню'].map((gender) => (
@@ -121,8 +121,8 @@ export default function ReportForm() {
                 type="button"
                 onClick={() => setFormData(prev => ({ ...prev, gender }))}
                 className={`px-4 py-3 rounded-xl font-medium transition-all duration-300 ${formData.gender === gender
-                    ? 'bg-gradient-to-r from-[#D2B48C] to-[#CD7F32] text-white shadow-lg'
-                    : 'bg-white border border-[#F7E7CE] text-gray-700 hover:border-[#D2B48C]'
+                  ? 'bg-gradient-to-r from-[#D2B48C] to-[#CD7F32] text-white shadow-lg'
+                  : 'bg-white border border-[#F7E7CE] text-gray-700 hover:border-[#D2B48C]'
                   }`}
               >
                 {gender}
@@ -166,7 +166,7 @@ export default function ReportForm() {
         {/* Type */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Тип мошенничества <span className="text-[#BC8F8F]">*</span>
+            Категория нарушения <span className="text-[#BC8F8F]">*</span>
           </label>
           <select
             name="type"
@@ -216,7 +216,7 @@ export default function ReportForm() {
             onChange={handleChange}
             required
             rows={4}
-            placeholder="Опишите что произошло, что говорил мошенник, какие данные запрашивал..."
+            placeholder="Опишите что произошло, что говорил звонящий, какие данные запрашивал..."
             className="input-modern resize-none"
           />
           <p className="mt-1.5 text-xs text-gray-500">
