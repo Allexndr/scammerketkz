@@ -11,21 +11,30 @@ export default function AiCheckPage() {
     const handleAnalyze = async () => {
         if (!text.trim()) return
         setIsAnalyzing(true)
+        setResult(null)
 
-        // Simulating AI delay
-        setTimeout(() => {
-            // Mock AI logic for demo
-            const isScam = text.toLowerCase().includes('карта') || text.toLowerCase().includes('код') || text.toLowerCase().includes('безопасный счет')
-
-            setResult({
-                score: isScam ? 95 : 10,
-                verdict: isScam ? 'Высокая вероятность мошенничества! 🚨' : 'Выглядит безопасно ✅',
-                advice: isScam
-                    ? 'Собеседник пытается получить доступ к вашим финансам. Срочно прекратите общение. Никогда не сообщайте коды из СМС.'
-                    : 'В тексте не найдено явных признаков социальной инженерии, но всегда будьте бдительны.'
+        try {
+            const response = await fetch('/api/ai_check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
             })
+
+            const data = await response.json()
+
+            if (data.error) {
+                alert('Ошибка анализа: ' + (data.details || data.error))
+                // Fallback for demo if no key provided
+                if (data.fallback) setResult(data.fallback)
+            } else {
+                setResult(data)
+            }
+        } catch (error) {
+            console.error(error)
+            alert('Не удалось связаться с сервером')
+        } finally {
             setIsAnalyzing(false)
-        }, 2000)
+        }
     }
 
     return (
