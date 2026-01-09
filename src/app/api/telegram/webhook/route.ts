@@ -38,13 +38,13 @@ export async function POST(req: NextRequest) {
                     { upsert: true, new: true }
                 )
 
-                // Sending a photo with the welcome message makes it look "richer"
-                // Using a placeholder image for now, or just text. Let's stick to text for speed.
-                await sendMessage(chatId, `<b>👋 Добро пожаловать, ${user.first_name}!</b>\n\n🛡️ <b>ScammerKetKz</b> — это единая база мошенников Казахстана с AI-анализом.\n\n👇 <b>Нажмите большую кнопку ниже, чтобы начать проверку:</b>`, {
+                // Safe greeting without HTML in name (prevents injection errors)
+                const welcomeText = `👋 Добро пожаловать, ${user.first_name}!\n\n🛡️ ScammerKetKz — это единая база мошенников Казахстана с AI-анализом.\n\n👇 Нажмите кнопку ниже, чтобы начать:`
+
+                await sendMessage(chatId, welcomeText, {
                     reply_markup: {
                         inline_keyboard: [
-                            [{ text: "🚀 Запустить ScammerKet", web_app: { url: WEB_APP_URL } }],
-                            [{ text: "🌐 Наш официальный сайт", url: WEB_APP_URL }]
+                            [{ text: "🚀 Запустить ScammerKet", web_app: { url: WEB_APP_URL } }]
                         ]
                     }
                 })
@@ -72,14 +72,23 @@ async function sendMessage(chatId: number, text: string, extra: any = {}) {
     if (!BOT_TOKEN) return
 
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`
-    await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            chat_id: chatId,
-            text: text,
-            parse_mode: 'HTML',
-            ...extra
+
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: text,
+                // parse_mode: 'HTML', // Disabled for stability
+                ...extra
+            })
         })
-    })
+        if (!res.ok) {
+            const err = await res.text()
+            console.error('Telegram API Error:', err)
+        }
+    } catch (e) {
+        console.error('Fetch failed:', e)
+    }
 }
