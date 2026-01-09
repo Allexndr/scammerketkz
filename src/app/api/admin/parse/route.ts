@@ -16,6 +16,13 @@ export async function POST(req: NextRequest) {
 
         const results = []
 
+        const typeMap: Record<string, string> = {
+            'financial_pyramid': 'pyramid',
+            'phishing': 'phishing',
+            'vishing': 'vishing',
+            'spam': 'spam'
+        }
+
         // 1. Process local blacklist (simulating parsing from file/web)
         for (const item of blacklist) {
             const exists = await Scam.findOne({ phoneNumber: item.phone })
@@ -24,7 +31,7 @@ export async function POST(req: NextRequest) {
                 await Scam.create({
                     phoneNumber: item.phone,
                     company: item.name,
-                    scamType: item.type === 'Финпирамида' ? 'pyramid' : 'other',
+                    scamType: typeMap[item.type] || 'other',
                     description: `Официально внесен в черный список. Источник: ${item.source}. Статус: ${item.status}`,
                     likes: 100, // Высокий рейтинг подтверждения
                     dislikes: 0,
