@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ShieldAlert } from 'lucide-react';
+import SearchForm from '@/components/SearchForm';
 
 export default function NotFound() {
     return (
@@ -22,9 +23,13 @@ export default function NotFound() {
                     Похоже, этой страницы не существует или она была удалена. Возможно, вы ошиблись в адресе.
                 </p>
 
+                <div className="max-w-md mx-auto mb-8 relative z-10">
+                    <SearchForm />
+                </div>
+
                 <Link
                     href="/"
-                    className="btn-primary inline-flex items-center gap-2"
+                    className="text-[#666666] hover:text-[#111111] font-medium transition-colors"
                 >
                     Вернуться на главную
                 </Link>
