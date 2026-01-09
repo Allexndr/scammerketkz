@@ -5,9 +5,9 @@ import { CheckCircle2, AlertTriangle, X } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import { TOP_COMPANIES } from '@/lib/mockScams'
 
-export default function ReportModal({ onClose }: { onClose: () => void }) {
+export default function ReportModal({ onClose, initialPhone = '' }: { onClose: () => void, initialPhone?: string }) {
     const [formData, setFormData] = useState({
-        phone: '',
+        phone: initialPhone,
         company: '',
         isOtherCompany: false,
         otherCompany: '',

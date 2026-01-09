@@ -36,7 +36,7 @@ function HomeContent() {
     return (
         <div className="min-h-screen pt-28 pb-20 px-4">
             {/* MODALS */}
-            {view === 'report' && <ReportModal onClose={closeModal} />}
+            {view === 'report' && <ReportModal onClose={closeModal} initialPhone={searchParams.get('phone') || ''} />}
             {view === 'leaderboard' && <LeaderboardModal onClose={closeModal} />}
             {view === 'login' && <LoginModal onClose={closeModal} />}
             {view === 'profile' && <ProfileModal onClose={closeModal} />}

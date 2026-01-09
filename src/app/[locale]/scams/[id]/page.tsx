@@ -7,6 +7,7 @@ import { ThumbsUp, ThumbsDown, User, Shield, AlertTriangle, ArrowLeft } from 'lu
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import AdSpace from '@/components/AdSpace'
+import CommentsSection from '@/components/CommentsSection'
 
 export const dynamic = 'force-dynamic'
 
@@ -177,12 +178,9 @@ export default function ScamDetailsPage() {
 
                 <AdSpace type="native" className="my-8" />
 
-                {/* Comments Section (Placeholder) */}
+                {/* Comments Section */}
                 <div className="mt-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Комментарии (Coming Soon)</h2>
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">
-                        Комментарии скоро будут доступны...
-                    </div>
+                    <CommentsSection scamId={scam._id} />
                 </div>
             </div>
         </div>
