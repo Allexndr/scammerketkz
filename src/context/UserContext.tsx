@@ -42,22 +42,37 @@ const getRank = (points: number): Rank => {
 }
 
 export function UserProvider({ children }: { children: ReactNode }) {
-    const { data: session } = useSession()
+    const { data: session, status } = useSession()
     const [user, setUser] = useState<User | null>(null)
 
+    // Sync with NextAuth session and fetch full profile
     useEffect(() => {
-        // Sync with NextAuth session
-        if (session?.user && !user) {
-            setUser({
-                name: session.user.name || 'Пользователь Google',
-                phone: session.user.email || 'Google Account', // Use email as identifier if phone is missing
-                points: 0, // In real app, fetch from DB
-                rank: 'Новичок',
-                reportsCount: 0,
-                reports: []
-            })
+        if (status === 'authenticated' && session?.user) {
+            // Optimistic update
+            setUser(prev => ({
+                ...prev,
+                name: session.user.name || prev?.name || 'Пользователь Google',
+                email: session.user.email || prev?.email,
+                image: session.user.image || prev?.image,
+                role: 'user', // Default role
+                points: prev?.points || 0,
+                rank: prev?.rank || 'Новичок',
+                reportsCount: prev?.reportsCount || 0,
+                reports: [],
+                apiKeys: []
+            } as User)) // Cast to User to satisfy type, as prev might be null
+
+            // Fetch full profile from DB
+            fetch('/api/profile/me')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && !data.error) {
+                        setUser(data)
+                    }
+                })
+                .catch(err => console.error('Failed to load profile', err))
         }
-    }, [session, user])
+    }, [session, status])
 
     useEffect(() => {
         // Restore session from local storage (legacy phone login)

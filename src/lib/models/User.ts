@@ -1,3 +1,4 @@
+```typescript
 import mongoose from 'mongoose'
 
 export interface IUser extends mongoose.Document {
@@ -15,6 +16,13 @@ export interface IUser extends mongoose.Document {
   updatedAt: Date
   votes: mongoose.Types.ObjectId[] // scam IDs they've voted on
   reportsCount: number
+  apiKeys?: {
+    key: string;
+    name: string;
+    createdAt: Date;
+    lastUsed?: Date;
+    isActive: boolean;
+  }[];
 }
 
 const UserSchema = new mongoose.Schema<IUser>({
