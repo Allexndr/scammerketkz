@@ -87,7 +87,10 @@ export default function StatsOverview() {
                                 <Icon className="w-6 h-6 text-white" />
                             </div>
 
-                            <div className={`text-3xl sm:text-4xl font-black mb-2 bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
+                            <div
+                                className={`text-3xl sm:text-4xl font-black mb-2 bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}
+                                suppressHydrationWarning
+                            >
                                 {stat.value.toLocaleString('ru-RU')}
                             </div>
 

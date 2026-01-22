@@ -66,7 +66,10 @@ export default function SearchForm() {
             </button>
 
             <div className="flex flex-col items-center gap-2">
-                <p className="text-[10px] text-[#A6845B] font-bold uppercase tracking-[0.2em]">
+                <p
+                    className="text-[10px] text-[#A6845B] font-bold uppercase tracking-[0.2em]"
+                    suppressHydrationWarning
+                >
                     Проверка по {totalRecords !== null ? totalRecords.toLocaleString() : '...'} записям
                 </p>
             </div>

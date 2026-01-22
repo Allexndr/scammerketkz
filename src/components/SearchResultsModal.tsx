@@ -204,7 +204,7 @@ export default function SearchResultsModal({ onClose }: { onClose: () => void })
 
                 {/* Footer */}
                 <div className="bg-[#F0F0EB] p-4 text-center border-t border-[#E0E0D8]">
-                    <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-[#888]">
+                    <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-[#888]" suppressHydrationWarning>
                         Данные предоставлены сообществом ScammerKetKz • {new Date().toLocaleDateString()}
                     </p>
                 </div>
