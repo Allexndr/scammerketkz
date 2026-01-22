@@ -7,6 +7,7 @@ type Rank = 'Новичок' | 'Охотник' | 'Эксперт' | 'Леген
 
 // Basic User Type for Context
 export interface User {
+    id?: string;
     name: string;
     email?: string;
     phone?: string;

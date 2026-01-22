@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { MessageSquare, Send } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
 import { format } from 'date-fns'
+import { useRouter } from 'next/navigation'
 import { ru } from 'date-fns/locale'
 
 interface Comment {
@@ -14,7 +15,8 @@ interface Comment {
 }
 
 export default function CommentsSection({ scamId }: { scamId: string }) {
-    const { user, login } = useUser()
+    const { user } = useUser()
+    const router = useRouter()
     const [comments, setComments] = useState<Comment[]>([])
     const [newComment, setNewComment] = useState('')
     const [loading, setLoading] = useState(true)
@@ -42,7 +44,7 @@ export default function CommentsSection({ scamId }: { scamId: string }) {
         e.preventDefault()
         if (!user) {
             // Trigger auto login (mock) or prompt
-            login()
+            router.push('/?view=login')
             return
         }
         if (!newComment.trim()) return
@@ -95,7 +97,7 @@ export default function CommentsSection({ scamId }: { scamId: string }) {
                         type="submit"
                         disabled={submitting || !newComment.trim()}
                         className="bg-[#111111] text-white px-6 py-2 rounded-lg font-bold hover:bg-black/80 transition-colors disabled:opacity-50 flex items-center gap-2"
-                        onClick={!user ? (e) => { e.preventDefault(); login(); } : undefined}
+                        onClick={!user ? (e) => { e.preventDefault(); router.push('/?view=login'); } : undefined}
                     >
                         {user ? (
                             <>
