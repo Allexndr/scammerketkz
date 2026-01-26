@@ -10,23 +10,9 @@ export async function POST(request: NextRequest) {
   try {
     const db = await connectDB()
 
-    // Return mock response if no real database connection
+    // Return error if no real database connection
     if (!db || !(db as any).connection?.readyState || (db as any).connection?.readyState !== 1) {
-      return NextResponse.json({
-        _id: 'mock-id',
-        phoneNumberHash: 'mock-hash',
-        gender: 'unknown',
-        company: 'Test Company',
-        scamType: 'other',
-        region: 'Test Region',
-        description: 'Test description',
-        likes: 0,
-        dislikes: 0,
-        reportedBy: 'mock-user',
-        status: 'Низкая угроза',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }, { status: 201 })
+      return NextResponse.json({ error: 'Database connection failed' }, { status: 500 })
     }
 
     const body = await request.json()

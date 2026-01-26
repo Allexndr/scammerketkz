@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import connectDB from '@/lib/mongodb'
 import Scam from '@/lib/models/Scam'
 import User from '@/lib/models/User'
-import { MOCK_SCAMS } from '@/lib/mockScams'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,12 +11,12 @@ export async function GET() {
         const dbConnected = db && (db as any).connection?.readyState === 1
 
         if (!dbConnected) {
-            // Fallback to mock data if DB not connected (dev mode without DB)
+            // Return zeros if DB is not connected
             return NextResponse.json({
-                totalScams: MOCK_SCAMS.length,
+                totalScams: 0,
                 totalUsers: 0,
-                totalCompanies: new Set(MOCK_SCAMS.map(s => s.company)).size,
-                verifiedScams: MOCK_SCAMS.filter(s => s.isVerified).length
+                totalCompanies: 0,
+                verifiedScams: 0
             })
         }
 

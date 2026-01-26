@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { CheckCircle2, AlertTriangle, X } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
-import { TOP_COMPANIES } from '@/lib/mockScams'
+import { TOP_COMPANIES } from '@/lib/constants'
 
 export default function ReportModal({ onClose, initialPhone = '' }: { onClose: () => void, initialPhone?: string }) {
     const [formData, setFormData] = useState({

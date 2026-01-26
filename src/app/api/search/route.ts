@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/mongodb'
 import Scam from '@/lib/models/Scam'
 import crypto from 'crypto'
-import { MOCK_SCAMS } from '@/lib/mockScams'
 import { sanitizeSearchQuery, sanitizePhone, sanitizeCompanyName, checkRateLimit, escapeRegex } from '@/lib/security'
 
 export const dynamic = 'force-dynamic'
@@ -118,39 +117,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Search in mock data
-    const normalizedQuery = query.replace(/\D/g, '')
-    const mockMatches = MOCK_SCAMS.filter(s => {
-      try {
-        if (type === 'phone') {
-          return s.phone.replace(/\D/g, '').includes(normalizedQuery)
-        } else if (type === 'company') {
-          return s.company.toLowerCase().includes(query.toLowerCase())
-        }
-        return false
-      } catch {
-        return false
-      }
-    }).slice(0, 10) // Limit mock results
-
-    const transformedMock = mockMatches.map(s => ({
-      _id: sanitizeSearchQuery(s.id),
-      id: sanitizeSearchQuery(s.id),
-      phoneNumber: sanitizePhone(s.phone),
-      phone: sanitizePhone(s.phone),
-      company: sanitizeCompanyName(s.company),
-      description: String(s.description).substring(0, 500),
-      isVerified: Boolean(s.isVerified),
-      status: String(s.status),
-      likes: Math.max(0, parseInt(String(s.likes || 0))),
-      dislikes: Math.max(0, parseInt(String(s.dislikes || 0))),
-      verificationRate: s.likes + s.dislikes > 0
-        ? Math.min(100, Math.max(0, Math.round((s.likes / (s.likes + s.dislikes)) * 100)))
-        : 0
-    }))
-
     // Combine results
-    const finalResults = [...results, ...transformedMock]
+    const finalResults = results
 
     return NextResponse.json({
       results: finalResults.slice(0, 20), // Hard limit
