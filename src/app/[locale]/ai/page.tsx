@@ -13,6 +13,9 @@ export default function AiCheckPage() {
         setIsAnalyzing(true)
         setResult(null)
 
+        // Scroll to where results will be
+        window.scrollTo({ top: 300, behavior: 'smooth' })
+
         try {
             const response = await fetch('/api/ai_check', {
                 method: 'POST',
@@ -101,7 +104,7 @@ export default function AiCheckPage() {
                                         ></div>
                                     </div>
                                     <p className="text-right text-xs font-bold mt-1 text-gray-500">
-                                        Риск: {result.score}%
+                                        Вероятность мошенничества: {result.score}%
                                     </p>
                                 </div>
                             </div>

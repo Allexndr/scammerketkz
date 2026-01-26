@@ -9,6 +9,7 @@ import { ru } from 'date-fns/locale'
 
 interface Comment {
     _id: string
+    id?: string
     userName: string
     text: string
     createdAt: string
@@ -119,7 +120,7 @@ export default function CommentsSection({ scamId }: { scamId: string }) {
                     </div>
                 ) : (
                     comments.map((comment) => (
-                        <div key={comment._id} className="group">
+                        <div key={comment._id || comment.id} className="group">
                             <div className="flex justify-between items-start mb-2">
                                 <div className="font-bold text-[#111111]">{comment.userName}</div>
                                 <div className="text-xs text-gray-400">

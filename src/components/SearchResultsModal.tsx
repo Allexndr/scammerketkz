@@ -21,9 +21,10 @@ export default function SearchResultsModal({ onClose }: { onClose: () => void })
             try {
                 const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=${type}`)
                 const data = await res.json()
-                // Ensure default values for likes/dislikes
+                // Ensure default values for likes/dislikes and normalize ID
                 const normalizedResults = (data.results || []).map((r: any) => ({
                     ...r,
+                    id: r._id || r.id,
                     likes: r.likes || 0,
                     dislikes: r.dislikes || 0
                 }))
