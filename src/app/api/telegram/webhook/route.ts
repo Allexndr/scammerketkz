@@ -22,7 +22,7 @@ const TXT = {
     check_instruction: "🔍 <b>Проверка / Тексеру</b>\n\nПросто отправьте номер телефона в чат.\nЛюбой формат: +7701..., 8701..., 701...\n\nЖай ғана телефон нөмірін чатқа жіберіңіз.",
     unknown: "⚠️ Я не понял команду.\nОтправьте номер телефона для проверки или используйте меню.",
     clean: (phone: string) => `✅ <b>Чисто / Таза</b>\nНомер: ${phone}\n\nВ нашей базе жалоб нет. Но будьте бдительны!`,
-    scam: (phone: string, company: string, type: string) => `🚫 <b>ВНИМАНИЕ / НАЗАР АУДАРЫҢЫЗ!</b>\n\nНомер: ${phone}\nОрганизация: <b>${company}</b>\nТип: ${type}\n\n⚠️ Есть жалобы от пользователей!`,
+    scam: (phone: string, company: string, type: string) => `🚫 <b>ВНИМАНИЕ / НАЗАР АУДАРЫҢЫЗ!</b>\n\nНомер: ${phone}\nОрганизация: <b>${company || 'Неизвестно'}</b>\nТип: ${type}\n\n⚠️ Есть жалобы от пользователей!`,
     btns: {
         webapp: "📱 Web App (Визуально)",
         textmode: "💬 Чат-бот (Текст)",
@@ -105,22 +105,31 @@ export async function POST(req: NextRequest) {
             }
 
             // --- Phone Number Check (Auto-detect) ---
-            // Regex for KZ/RU phones: matches +7, 8, 7 starting numbers
             const cleanText = text?.replace(/\D/g, '') || ''
             if (cleanText.length >= 10 && (cleanText.startsWith('7') || cleanText.startsWith('8'))) {
-                // Normalize to 7...
-                const normalized = '7' + cleanText.slice(-10)
-                // Also try to find strictly by input or +input
-                const scam = await Scam.findOne({
-                    $or: [
-                        { phoneNumber: text },
-                        { phoneNumber: `+${cleanText}` },
-                        { phoneNumber: cleanText } // raw
-                    ]
-                })
+
+                // 1. Normalize (same as in security.ts)
+                let normalized = cleanText
+                if (normalized.length === 11 && normalized.startsWith('8')) {
+                    normalized = '7' + normalized.substring(1)
+                }
+                if (normalized.length === 10) {
+                    normalized = '7' + normalized
+                }
+
+                // 2. Hash
+                const crypto = require('crypto')
+                const phoneHash = crypto.createHash('sha256').update(normalized).digest('hex')
+
+                // 3. Search by Hash (fast and accurate)
+                // Also optionally search by partial regex for user friendliness if needed, 
+                // but hash is best for "is this specific number verified?"
+                const scam = await Scam.findOne({ phoneHash })
 
                 if (scam) {
-                    await sendMessage(chatId, TXT.scam(scam.phoneNumber, scam.company, scam.scamType))
+                    // Normalize for display
+                    const formattedPhone = scam.phoneNumber.replace(/(\d{1})(\d{3})(\d{3})(\d{4})/, '+$1 ($2) $3-$4')
+                    await sendMessage(chatId, TXT.scam(formattedPhone, scam.company, scam.scamType))
                 } else {
                     await sendMessage(chatId, TXT.clean(cleanText))
                 }
