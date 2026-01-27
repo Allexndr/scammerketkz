@@ -41,7 +41,7 @@ const ScamSchema = new mongoose.Schema<IScam>({
   },
   scamType: {
     type: String,
-    enum: ['phishing', 'fake_sale', 'crypto', 'other'],
+    enum: ['phishing', 'fake_sale', 'fake_shop', 'crypto', 'rental', 'prize', 'other'],
     default: 'other'
   },
   region: {

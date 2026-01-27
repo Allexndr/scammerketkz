@@ -18,6 +18,28 @@ export function sanitizePhone(input: string): string {
 }
 
 /**
+ * Normalize phone number for consistent storage and hashing
+ * Converts 87... to 77...
+ * Removes non-digits
+ */
+export function normalizePhone(input: string): string {
+    if (!input || typeof input !== 'string') return ''
+    let cleaned = input.replace(/\D/g, '')
+
+    // Handle KZ/RU definitions: 11 digits starting with 8 -> convert to 7
+    if (cleaned.length === 11 && cleaned.startsWith('8')) {
+        cleaned = '7' + cleaned.substring(1)
+    }
+
+    // Handle 10 digits (missing country code) -> add 7
+    if (cleaned.length === 10) {
+        cleaned = '7' + cleaned
+    }
+
+    return cleaned
+}
+
+/**
  * Sanitize company name
  * Removes special characters that could be used for injection
  */

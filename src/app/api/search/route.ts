@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/mongodb'
 import Scam from '@/lib/models/Scam'
 import crypto from 'crypto'
-import { sanitizeSearchQuery, sanitizePhone, sanitizeCompanyName, checkRateLimit, escapeRegex } from '@/lib/security'
+import { sanitizeSearchQuery, sanitizePhone, sanitizeCompanyName, checkRateLimit, escapeRegex, normalizePhone } from '@/lib/security'
 
 export const dynamic = 'force-dynamic'
 
@@ -63,20 +63,32 @@ export async function GET(request: NextRequest) {
         let searchCriteria: any = {}
 
         if (type === 'phone') {
-          // Sanitize phone before hashing
-          const sanitizedPhone = sanitizePhone(query)
-          const normalizedPhone = sanitizedPhone.replace(/\D/g, '')
+          // Normalize phone logic
+          const normalizedInput = normalizePhone(query)
+          const rawDigits = query.replace(/\D/g, '')
 
-          // Prevent DoS with extremely long inputs
-          if (normalizedPhone.length > 20) {
-            return NextResponse.json(
-              { error: 'Invalid phone number' },
-              { status: 400 }
-            )
+          const conditions: any[] = []
+
+          // 1. Exact Hash Match (High Confidence)
+          if (normalizedInput.length >= 10) {
+            const phoneHash = crypto.createHash('sha256').update(normalizedInput).digest('hex')
+            conditions.push({ phoneHash })
           }
 
-          const phoneHash = crypto.createHash('sha256').update(normalizedPhone).digest('hex')
-          searchCriteria = { phoneHash }
+          // 2. Partial RegEx Match (For usability)
+          // Matches if the stored phoneNumber contains the input digits (even if formatted)
+          // We search for the digits the user typed.
+          if (rawDigits.length > 2) {
+            conditions.push({ phoneNumber: { $regex: rawDigits, $options: 'i' } })
+          }
+
+          // Combined OR query
+          if (conditions.length > 0) {
+            searchCriteria = { $or: conditions }
+          } else {
+            // Fallback for short non-digit queries?
+            searchCriteria = { phoneNumber: { $regex: escapeRegex(query), $options: 'i' } }
+          }
         } else if (type === 'company') {
           // Sanitize company name
           const sanitizedCompany = sanitizeCompanyName(query)

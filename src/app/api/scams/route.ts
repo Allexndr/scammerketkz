@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/mongodb'
 import Scam from '@/lib/models/Scam'
 import User from '@/lib/models/User'
+import { normalizePhone } from '@/lib/security'
 import crypto from 'crypto'
 
 export const dynamic = 'force-dynamic'
@@ -46,7 +47,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if this phone number already exists
-    const phoneHash = crypto.createHash('sha256').update(phoneNumber.replace(/\D/g, '')).digest('hex')
+    const normalizedPhone = normalizePhone(phoneNumber)
+    const phoneHash = crypto.createHash('sha256').update(normalizedPhone).digest('hex')
     const existingScam = await Scam.findOne({ phoneHash })
 
     if (existingScam) {
@@ -58,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     // Create new scam report
     const scam = new Scam({
-      phoneNumber: phoneNumber.replace(/\D/g, ''), // Store clean number
+      phoneNumber: normalizedPhone, // Store normalized numbers for consistency going forward
       phoneHash,
       gender,
       company: company.trim(),
