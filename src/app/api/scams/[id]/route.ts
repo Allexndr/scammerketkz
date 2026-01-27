@@ -13,6 +13,9 @@ export async function GET(
     try {
         await connectDB()
 
+        // Force model registration (prevent tree-shaking)
+        const _models = { User, Comment }
+
         const { id } = await params
 
         // Validate ID format
@@ -60,7 +63,7 @@ export async function GET(
     } catch (error) {
         console.error('Error fetching scam details:', error)
         return NextResponse.json(
-            { error: 'Failed to fetch scam details' },
+            { error: 'Failed to fetch scam details', details: String(error) },
             { status: 500 }
         )
     }
