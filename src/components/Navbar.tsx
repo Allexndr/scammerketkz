@@ -27,7 +27,7 @@ export default function Navbar() {
     const navLinks = [
         { href: '/', label: t('home') },
         { href: '/scams', label: t('scams') },
-        { href: '/registry', label: 'Реестр', icon: Users },
+        { href: '/registry', label: 'Недобросов. исполнители', icon: Users },
         { href: '/ai', label: 'AI Анализ', icon: Bot },
         { href: '/business', label: 'API', icon: Briefcase },
     ]
