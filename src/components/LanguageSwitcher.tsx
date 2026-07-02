@@ -27,8 +27,8 @@ export default function LanguageSwitcher() {
             {isOpen && (
                 <div className="absolute top-full right-0 mt-2 w-32 bg-white rounded-xl shadow-xl border border-[#F7E7CE] py-2 z-50 animate-fade-in">
                     {[
-                        { code: 'ru', label: 'Русский' },
                         { code: 'kz', label: 'Қазақша' },
+                        { code: 'ru', label: 'Русский' },
                         { code: 'en', label: 'English' },
                     ].map((lang) => (
                         <button
