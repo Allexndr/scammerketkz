@@ -253,10 +253,11 @@ export default function SocialScamReportForm() {
 
           {/* Region */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label htmlFor="region" className="block text-sm font-bold text-gray-700 mb-2">
               Регион
             </label>
             <select
+              id="region"
               name="region"
               value={formData.region}
               onChange={handleChange}

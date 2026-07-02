@@ -241,6 +241,7 @@ export default function RegistryPage() {
 
           {/* Sort */}
           <select
+            aria-label="Сортировка"
             value={filters.sort}
             onChange={(e) => { setFilters(prev => ({ ...prev, sort: e.target.value })); setPage(1) }}
             className="px-4 py-2 bg-white border border-[#E0E0D8] rounded-lg text-sm font-bold text-gray-600 outline-none focus:border-[#A6845B]"

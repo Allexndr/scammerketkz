@@ -124,9 +124,11 @@ export default function ReportModal({ onClose, initialPhone = '' }: { onClose: (
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-bold text-[#444444] mb-2">От какой компании</label>
+                                <label htmlFor="company-select" className="block text-sm font-bold text-[#444444] mb-2">От какой компании</label>
                                 {!formData.isOtherCompany ? (
                                     <select
+                                        id="company-select"
+                                        aria-label="Компания"
                                         className="input-paper"
                                         value={formData.company}
                                         onChange={e => {
@@ -165,8 +167,10 @@ export default function ReportModal({ onClose, initialPhone = '' }: { onClose: (
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-[#444444] mb-2">Категория нарушения</label>
+                                <label htmlFor="fraud-type" className="block text-sm font-bold text-[#444444] mb-2">Категория нарушения</label>
                                 <select
+                                    id="fraud-type"
+                                    aria-label="Категория нарушения"
                                     className="input-paper"
                                     value={formData.fraudType}
                                     onChange={e => setFormData({ ...formData, fraudType: e.target.value })}
@@ -203,8 +207,10 @@ export default function ReportModal({ onClose, initialPhone = '' }: { onClose: (
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-[#444444] mb-2">Регион</label>
+                                <label htmlFor="region-select" className="block text-sm font-bold text-[#444444] mb-2">Регион</label>
                                 <select
+                                    id="region-select"
+                                    aria-label="Регион"
                                     className="input-paper"
                                     value={formData.region}
                                     onChange={e => setFormData({ ...formData, region: e.target.value })}

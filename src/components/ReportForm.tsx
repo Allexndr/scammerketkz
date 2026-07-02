@@ -182,10 +182,11 @@ export default function ReportForm() {
 
         {/* Type */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label htmlFor="type" className="block text-sm font-semibold text-gray-700 mb-2">
             Категория нарушения <span className="text-[#BC8F8F]">*</span>
           </label>
           <select
+            id="type"
             name="type"
             value={formData.type}
             onChange={handleChange}
@@ -203,10 +204,11 @@ export default function ReportForm() {
 
         {/* Region */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label htmlFor="region" className="block text-sm font-semibold text-gray-700 mb-2">
             Регион <span className="text-[#BC8F8F]">*</span>
           </label>
           <select
+            id="region"
             name="region"
             value={formData.region}
             onChange={handleChange}
