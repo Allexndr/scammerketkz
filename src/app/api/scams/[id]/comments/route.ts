@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import connectDB from '@/lib/mongodb'
-import Comment from '@/lib/models/Comment'
-import Scam from '@/lib/models/Scam'
-// import { v4 as uuidv4 } from 'uuid'
+import { supabaseAdmin } from '@/lib/supabase'
+import { sanitizeDescription, checkRateLimit } from '@/lib/security'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,13 +11,24 @@ export async function GET(
     { params }: { params: { id: string } }
 ) {
     try {
-        await connectDB()
-        const comments = await Comment.find({ scamId: params.id })
-            .sort({ createdAt: -1 })
+        const { id } = await params
+        const { data: comments, error } = await supabaseAdmin
+            .from('comments')
+            .select('id, user_name, text, created_at')
+            .eq('scam_id', id)
+            .order('created_at', { ascending: false })
             .limit(50)
-            .lean()
 
-        return NextResponse.json(comments)
+        if (error) {
+            return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 })
+        }
+
+        return NextResponse.json((comments || []).map((c: any) => ({
+            _id: c.id,
+            userName: c.user_name,
+            text: c.text,
+            createdAt: c.created_at,
+        })))
     } catch (error) {
         return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 })
     }
@@ -28,27 +39,70 @@ export async function POST(
     { params }: { params: { id: string } }
 ) {
     try {
-        await connectDB()
-        const body = await req.json()
-        const { userId, userName, text } = body
-
-        if (!userId || !text) {
-            return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
+        const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0] ||
+            req.headers.get('x-real-ip') || 'unknown'
+        const rateCheck = checkRateLimit(`comment-${clientIp}`, 10, 3600000)
+        if (!rateCheck.allowed) {
+            return NextResponse.json(
+                { error: 'Слишком много комментариев. Попробуйте позже.' },
+                { status: 429, headers: { 'Retry-After': '3600' } }
+            )
         }
 
-        const newComment = await Comment.create({
-            scamId: params.id,
-            userId, // Assuming valid ObjectId or string passed from client context
-            userName: userName || 'Аноним',
-            text
-        })
+        const { id } = await params
+        const body = await req.json()
+        const { text } = body
 
-        // Link back to Scam
-        await Scam.findByIdAndUpdate(params.id, {
-            $push: { comments: newComment._id }
-        })
+        if (!text || typeof text !== 'string') {
+            return NextResponse.json({ error: 'Текст комментария обязателен' }, { status: 400 })
+        }
 
-        return NextResponse.json(newComment)
+        const sanitizedText = sanitizeDescription(text)
+        if (sanitizedText.length < 3) {
+            return NextResponse.json({ error: 'Комментарий слишком короткий' }, { status: 400 })
+        }
+
+        // Get authenticated user
+        const session = await getServerSession(authOptions)
+        let userId: string | null = null
+        let userName = 'Гость'
+
+        if (session?.user?.email) {
+            const { data: user } = await supabaseAdmin
+                .from('users')
+                .select('id, name')
+                .eq('email', session.user.email)
+                .single()
+            if (user) {
+                userId = user.id
+                userName = user.name || session.user.name || 'Пользователь'
+            }
+        } else {
+            userId = `anon-${clientIp}`
+        }
+
+        const { data: comment, error } = await supabaseAdmin
+            .from('comments')
+            .insert({
+                scam_id: id,
+                user_id: userId,
+                user_name: userName,
+                text: sanitizedText,
+            })
+            .select('id, user_name, text, created_at')
+            .single()
+
+        if (error || !comment) {
+            console.error('Comment insert error:', error)
+            return NextResponse.json({ error: 'Failed to post comment' }, { status: 500 })
+        }
+
+        return NextResponse.json({
+            _id: comment.id,
+            userName: comment.user_name,
+            text: comment.text,
+            createdAt: comment.created_at,
+        })
     } catch (error) {
         console.error('Comment Error:', error)
         return NextResponse.json({ error: 'Failed to post comment' }, { status: 500 })

@@ -1,48 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server'
-import connectDB from '@/lib/mongodb'
-import User from '@/lib/models/User'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
-    await connectDB()
-
     const { searchParams } = new URL(request.url)
     const filter = searchParams.get('filter') || 'all'
 
-    // Calculate date filter
-    let dateFilter = {}
-    if (filter === 'week') {
-      const weekAgo = new Date()
-      weekAgo.setDate(weekAgo.getDate() - 7)
-      dateFilter = { createdAt: { $gte: weekAgo } }
-    } else if (filter === 'month') {
-      const monthAgo = new Date()
-      monthAgo.setMonth(monthAgo.getMonth() - 1)
-      dateFilter = { createdAt: { $gte: monthAgo } }
+    let query = supabaseAdmin
+      .from('users')
+      .select('id, name, points, rank, reports_count, verified_reports_count, people_protected, badges')
+      .order('points', { ascending: false })
+      .limit(100)
+
+    if (filter === 'week' || filter === 'month') {
+      const date = new Date()
+      if (filter === 'week') date.setDate(date.getDate() - 7)
+      else date.setMonth(date.getMonth() - 1)
+      query = query.gte('created_at', date.toISOString())
     }
 
-    // Fetch users with ranking
-    const users = await User.find(dateFilter)
-      .select('username points status scamsReported scamsVerified')
-      .sort({ points: -1 })
-      .limit(100)
-      .lean()
+    const { data: users, error } = await query
 
-    // Add rank
-    const rankedUsers = users.map((user, index) => ({
-      ...user,
+    if (error) {
+      console.error('Leaderboard error:', error)
+      return NextResponse.json({ error: 'Failed to fetch leaderboard' }, { status: 500 })
+    }
+
+    const rankedUsers = (users || []).map((user: any, index: number) => ({
+      id: user.id,
+      username: user.name,
+      points: user.points,
+      status: user.rank,
+      scamsReported: user.reports_count || 0,
+      scamsVerified: user.verified_reports_count || 0,
+      peopleProtected: user.people_protected || 0,
+      badges: user.badges || [],
       rank: index + 1,
-      id: user._id.toString(),
     }))
 
-    return NextResponse.json(rankedUsers)
+    return NextResponse.json({ users: rankedUsers })
   } catch (error) {
     console.error('Leaderboard error:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch leaderboard' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch leaderboard' }, { status: 500 })
   }
 }

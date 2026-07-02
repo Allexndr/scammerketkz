@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -7,11 +8,42 @@ import { UserProvider } from '@/context/UserContext';
 import NextAuthProvider from '@/components/NextAuthProvider';
 import '../globals.css';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { ToastProvider } from '@/components/ToastProvider';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import TelegramProvider from '@/components/TelegramProvider';
 
-export const metadata = {
-    title: 'ScammerKetKz - Платформа проверки номеров',
-    description: 'Проверьте номер телефона на наличие жалоб. Единая база отзывов Казахстана.',
+export const metadata: Metadata = {
+    title: {
+        default: 'ScammerKetKz — Проверка номеров мошенников в Казахстане',
+        template: '%s | ScammerKetKz',
+    },
+    description: 'База данных подозрительных номеров и компаний. Проверьте номер телефона, сообщите о мошенничестве, защитите себя и близких.',
+    keywords: ['мошенники Казахстан', 'проверка номера', 'скам', 'фишинг', 'вишинг', 'телефонные мошенники', 'Kaspi', 'Halyk Bank', 'антифрод'],
+    openGraph: {
+        title: 'ScammerKetKz — Защита от мошенников в Казахстане',
+        description: 'Проверьте номер телефона по базе сообщества. Сообщите о мошенничестве.',
+        type: 'website',
+        locale: 'ru_KZ',
+        siteName: 'ScammerKetKz',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'ScammerKetKz — Проверка номеров мошенников',
+        description: 'База данных подозрительных номеров в Казахстане',
+    },
+    robots: {
+        index: true,
+        follow: true,
+    },
+    alternates: {
+        canonical: '/',
+        languages: {
+            'ru': '/',
+            'kk': '/kz',
+            'en': '/en',
+        },
+    },
 };
 
 export const viewport = {
@@ -40,10 +72,15 @@ export default async function LocaleLayout({
                 <NextIntlClientProvider locale={locale} messages={messages}>
                     <NextAuthProvider>
                         <UserProvider>
-                            <TelegramProvider>
-                                <Navbar />
-                                {children}
-                            </TelegramProvider>
+                            <ToastProvider>
+                                <TelegramProvider>
+                                    <ErrorBoundary>
+                                        <Navbar />
+                                        {children}
+                                        <Footer />
+                                    </ErrorBoundary>
+                                </TelegramProvider>
+                            </ToastProvider>
                         </UserProvider>
                     </NextAuthProvider>
                 </NextIntlClientProvider>

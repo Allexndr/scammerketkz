@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { MessageSquare, Send } from 'lucide-react'
 import { useUser } from '@/context/UserContext'
+import { useToast } from '@/components/ToastProvider'
 import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
 import { ru } from 'date-fns/locale'
@@ -17,6 +18,7 @@ interface Comment {
 
 export default function CommentsSection({ scamId }: { scamId: string }) {
     const { user } = useUser()
+    const { showToast } = useToast()
     const router = useRouter()
     const [comments, setComments] = useState<Comment[]>([])
     const [newComment, setNewComment] = useState('')
@@ -44,7 +46,7 @@ export default function CommentsSection({ scamId }: { scamId: string }) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!user) {
-            // Trigger auto login (mock) or prompt
+            showToast('Войдите, чтобы оставить комментарий', 'info')
             router.push('/?view=login')
             return
         }
@@ -56,8 +58,6 @@ export default function CommentsSection({ scamId }: { scamId: string }) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    userId: user.id || user.telegramId, // Adjust based on User context
-                    userName: user.name || 'Аноним',
                     text: newComment
                 })
             })
@@ -66,9 +66,14 @@ export default function CommentsSection({ scamId }: { scamId: string }) {
                 const savedComment = await res.json()
                 setComments([savedComment, ...comments])
                 setNewComment('')
+                showToast('Комментарий добавлен', 'success')
+            } else {
+                const err = await res.json()
+                showToast(err.error || 'Ошибка', 'error')
             }
         } catch (e) {
             console.error(e)
+            showToast('Ошибка сети', 'error')
         } finally {
             setSubmitting(false)
         }

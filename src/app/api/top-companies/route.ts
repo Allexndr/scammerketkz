@@ -1,44 +1,39 @@
 import { NextResponse } from 'next/server'
-import connectDB from '@/lib/mongodb'
-import Scam from '@/lib/models/Scam'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
     try {
-        const db = await connectDB().catch(() => null)
-        const dbConnected = db && (db as any).connection?.readyState === 1
+        const { data: scams, error } = await supabaseAdmin
+            .from('scams')
+            .select('company')
 
-        if (!dbConnected) {
+        if (error || !scams) {
             return NextResponse.json([])
         }
 
-        // Aggregate top companies from DB
-        const topCompanies = await Scam.aggregate([
-            {
-                $group: {
-                    _id: "$company",
-                    count: { $sum: 1 }
-                }
-            },
-            { $sort: { count: -1 } },
-            { $limit: 10 }
-        ])
-
-        const companiesWithRisk = topCompanies.map(c => {
-            let risk = 'Низкий'
-            if (c.count >= 10) risk = 'Критический'
-            else if (c.count >= 5) risk = 'Высокий'
-            else if (c.count >= 2) risk = 'Средний'
-
-            return {
-                company: c._id,
-                count: c.count,
-                risk: risk
+        // Aggregate in JS (Supabase doesn't have native group-by in the client)
+        const companyMap: Record<string, number> = {}
+        scams.forEach((s: any) => {
+            if (s.company) {
+                const key = s.company
+                companyMap[key] = (companyMap[key] || 0) + 1
             }
         })
 
-        return NextResponse.json(companiesWithRisk)
+        const sorted = Object.entries(companyMap)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10)
+            .map(([company, count]) => {
+                let risk = 'Низкий'
+                if (count >= 10) risk = 'Критический'
+                else if (count >= 5) risk = 'Высокий'
+                else if (count >= 2) risk = 'Средний'
+                return { company, count, risk }
+            })
+
+        return NextResponse.json(sorted)
     } catch (error) {
         console.error('Error fetching top companies:', error)
         return NextResponse.json({ error: 'Failed to fetch top companies' }, { status: 500 })

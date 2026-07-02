@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { X, Shield, AlertTriangle, CheckCircle2, Search, ArrowRight, ExternalLink } from 'lucide-react'
+import { X, Shield, AlertTriangle, CheckCircle2, Search, ArrowRight, ExternalLink, Share2, Copy, MessageCircle, ThumbsUp } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { useUser } from '@/context/UserContext'
+import { useToast } from '@/components/ToastProvider'
 
 export default function SearchResultsModal({ onClose }: { onClose: () => void }) {
     const searchParams = useSearchParams()
@@ -14,6 +15,63 @@ export default function SearchResultsModal({ onClose }: { onClose: () => void })
     const [loading, setLoading] = useState(true)
     const [expandedId, setExpandedId] = useState<string | null>(null)
     const { isLoggedIn } = useUser()
+    const { showToast } = useToast()
+    const [copiedId, setCopiedId] = useState<string | null>(null)
+
+    const getRiskLevel = (scam: any) => {
+        const totalVotes = (scam.likes || 0) + (scam.dislikes || 0)
+        if (totalVotes === 0) return { level: 'unknown', color: '#888', bg: '#F0F0EB', label: 'НОВЫЙ', icon: Shield }
+        const rate = (scam.likes / totalVotes) * 100
+        if (rate >= 70) return { level: 'high', color: '#C06C5F', bg: '#FDF2F0', label: 'ВЫСОКАЯ УГРОЗА', icon: AlertTriangle }
+        if (rate >= 40) return { level: 'medium', color: '#E6B89C', bg: '#FEF6F0', label: 'ПОДОЗРИТЕЛЬНО', icon: Shield }
+        return { level: 'low', color: '#8A9A5B', bg: '#F4F6EE', label: 'НЕ ПРОВЕРЕНО', icon: CheckCircle2 }
+    }
+
+    const handleShare = async (scam: any, platform: 'telegram' | 'whatsapp' | 'copy') => {
+        const id = scam._id || scam.id
+        const url = `${window.location.origin}/scams/${id}`
+        const text = `⚠️ Проверка номера на ScammerKetKz: ${scam.phoneNumber || scam.phone} — ${scam.company}`
+
+        if (platform === 'telegram') {
+            window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank')
+        } else if (platform === 'whatsapp') {
+            window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank')
+        } else if (platform === 'copy') {
+            try {
+                await navigator.clipboard.writeText(url)
+                setCopiedId(id)
+                setTimeout(() => setCopiedId(null), 2000)
+            } catch (e) {
+                console.error('Copy failed', e)
+            }
+        }
+    }
+
+    const handleQuickConfirm = async (id: string) => {
+        try {
+            const res = await fetch(`/api/scams/${id}/vote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'like' })
+            })
+            if (res.ok) {
+                const data = await res.json()
+                setResults(prev => prev.map(scam => {
+                    if (scam._id === id || scam.id === id) {
+                        return { ...scam, likes: data.likes, dislikes: data.dislikes, isVerified: data.isVerified }
+                    }
+                    return scam
+                }))
+                showToast('Ваш голос учтён', 'success')
+            } else {
+                const err = await res.json()
+                showToast(err.error || 'Ошибка', 'error')
+            }
+        } catch (e) {
+            console.error('Quick confirm error:', e)
+            showToast('Ошибка сети', 'error')
+        }
+    }
 
     useEffect(() => {
         const fetchResults = async () => {
@@ -38,28 +96,46 @@ export default function SearchResultsModal({ onClose }: { onClose: () => void })
         if (query) fetchResults()
     }, [query, type])
 
-    const handleVote = (id: string, isLike: boolean) => {
+    const handleVote = async (id: string, isLike: boolean) => {
         if (!isLoggedIn) {
-            alert('Голосование доступно только авторизованным пользователям.')
+            showToast('Войдите, чтобы голосовать', 'info')
             return
         }
 
-        setResults(prev => prev.map(scam => {
-            if (scam._id === id || scam.id === id) {
-                return {
-                    ...scam,
-                    likes: isLike ? scam.likes + 1 : scam.likes,
-                    dislikes: !isLike ? scam.dislikes + 1 : scam.dislikes
-                }
+        try {
+            const res = await fetch(`/api/scams/${id}/vote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: isLike ? 'like' : 'dislike' })
+            })
+
+            if (res.ok) {
+                const data = await res.json()
+                setResults(prev => prev.map(scam => {
+                    if (scam._id === id || scam.id === id) {
+                        return {
+                            ...scam,
+                            likes: data.likes,
+                            dislikes: data.dislikes,
+                            isVerified: data.isVerified
+                        }
+                    }
+                    return scam
+                }))
+                showToast(isLike ? 'Голос «Верю» учтён' : 'Голос «Ложь» учтён', 'success')
+            } else {
+                const err = await res.json()
+                showToast(err.error || 'Ошибка при голосовании', 'error')
             }
-            return scam
-        }))
-        alert(isLike ? 'Вы подтвердили информацию.' : 'Вы опровергли информацию.')
+        } catch (err) {
+            console.error('Vote error:', err)
+            showToast('Ошибка сети при голосовании', 'error')
+        }
     }
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in text-[#111111]">
-            <div className="bg-[#F9F9F7] w-full max-w-4xl rounded-none border-2 border-black shadow-2xl max-h-[90vh] flex flex-col">
+            <div className="bg-[#F9F9F7] w-full max-w-4xl rounded-2xl sm:rounded-none border-2 border-black shadow-2xl max-h-[90vh] flex flex-col">
                 {/* Header */}
                 <div className="bg-[#111111] p-6 text-white flex items-center justify-between border-b-4 border-[#A6845B]">
                     <div className="flex items-center gap-3">
@@ -104,6 +180,21 @@ export default function SearchResultsModal({ onClose }: { onClose: () => void })
                                         <span className="text-[10px] font-black text-[#A6845B] uppercase tracking-widest italic">№ {(idx + 1).toString().padStart(3, '0')}</span>
                                     </div>
 
+                                    {/* Risk Level Banner */}
+                                    {(() => {
+                                        const risk = getRiskLevel(scam)
+                                        const RiskIcon = risk.icon
+                                        return (
+                                            <div className="mb-5 p-3 border-l-4 flex items-center gap-3" style={{ backgroundColor: risk.bg, borderColor: risk.color }}>
+                                                <RiskIcon className="w-5 h-5" style={{ color: risk.color }} />
+                                                <span className="text-xs font-black uppercase tracking-widest" style={{ color: risk.color }}>{risk.label}</span>
+                                                <span className="ml-auto text-xs font-bold text-gray-400">
+                                                    {scam.likes + scam.dislikes > 0 ? `${scam.likes + scam.dislikes} голосов` : 'Нет голосов'}
+                                                </span>
+                                            </div>
+                                        )
+                                    })()}
+
                                     <div className="flex flex-col md:flex-row gap-8">
                                         <div className="flex-1 space-y-5">
                                             <div className="flex items-center gap-4">
@@ -137,15 +228,36 @@ export default function SearchResultsModal({ onClose }: { onClose: () => void })
                                                 )}
                                             </div>
 
-                                            <div className="flex flex-wrap gap-6 pt-6 border-t border-black/10">
-                                                <div className="flex flex-col">
-                                                    <span className="text-[8px] uppercase font-black text-gray-400">Текущий статус</span>
-                                                    <span className="text-xs font-black text-[#C06C5F] uppercase tracking-widest">{scam.status || 'REPORTED'}</span>
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[8px] uppercase font-black text-gray-400">Риск-фактор</span>
-                                                    <span className={`text-xs font-black uppercase tracking-widest ${scam.verificationRate > 70 ? 'text-[#8A9A5B]' : 'text-[#C06C5F]'}`}>{scam.verificationRate || 99}%</span>
-                                                </div>
+                                            {/* Quick Actions Row */}
+                                            <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-black/10">
+                                                <button
+                                                    onClick={() => handleQuickConfirm(id)}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-[#8A9A5B]/10 border border-[#8A9A5B]/30 rounded-lg text-xs font-bold text-[#8A9A5B] hover:bg-[#8A9A5B]/20 transition-all"
+                                                >
+                                                    <ThumbsUp className="w-4 h-4" />
+                                                    Тоже звонили
+                                                </button>
+                                                <button
+                                                    onClick={() => handleShare(scam, 'telegram')}
+                                                    className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs font-bold text-blue-600 hover:bg-blue-100 transition-all"
+                                                >
+                                                    <MessageCircle className="w-4 h-4" />
+                                                    Telegram
+                                                </button>
+                                                <button
+                                                    onClick={() => handleShare(scam, 'whatsapp')}
+                                                    className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-xs font-bold text-green-600 hover:bg-green-100 transition-all"
+                                                >
+                                                    <Share2 className="w-4 h-4" />
+                                                    WhatsApp
+                                                </button>
+                                                <button
+                                                    onClick={() => handleShare(scam, 'copy')}
+                                                    className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-100 transition-all"
+                                                >
+                                                    {copiedId === id ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                                    {copiedId === id ? 'Скопировано!' : 'Ссылка'}
+                                                </button>
                                             </div>
                                         </div>
 

@@ -1,40 +1,29 @@
 import { NextResponse } from 'next/server'
-import connectDB from '@/lib/mongodb'
-import Scam from '@/lib/models/Scam'
-import User from '@/lib/models/User'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
     try {
-        const db = await connectDB().catch(() => null)
-        const dbConnected = db && (db as any).connection?.readyState === 1
+        const [{ count: totalScams }, { count: totalUsers }, { count: verifiedScams }] = await Promise.all([
+            supabaseAdmin.from('scams').select('*', { count: 'exact', head: true }),
+            supabaseAdmin.from('users').select('*', { count: 'exact', head: true }),
+            supabaseAdmin.from('scams').select('*', { count: 'exact', head: true }).eq('is_verified', true),
+        ])
 
-        if (!dbConnected) {
-            // Return zeros if DB is not connected
-            return NextResponse.json({
-                totalScams: 0,
-                totalUsers: 0,
-                totalCompanies: 0,
-                verifiedScams: 0
-            })
-        }
+        // Get distinct companies count
+        const { data: companies } = await supabaseAdmin
+            .from('scams')
+            .select('company')
+            .not('company', 'is', null)
 
-        // Fetch real data
-        const totalScams = await Scam.countDocuments()
-        const totalUsers = await User.countDocuments()
-
-        // Accurate distinct count might be slow on large datasets, but fine for now
-        const companies = await Scam.distinct('company')
-        const totalCompanies = companies.length
-
-        const verifiedScams = await Scam.countDocuments({ isVerified: true })
+        const uniqueCompanies = new Set((companies || []).map((c: any) => c.company?.toLowerCase()).filter(Boolean))
 
         return NextResponse.json({
-            totalScams,
-            totalUsers,
-            totalCompanies,
-            verifiedScams
+            totalScams: totalScams || 0,
+            totalUsers: totalUsers || 0,
+            totalCompanies: uniqueCompanies.size,
+            verifiedScams: verifiedScams || 0,
         })
     } catch (error) {
         console.error('Error fetching stats:', error)
@@ -42,7 +31,7 @@ export async function GET() {
             totalScams: 0,
             totalUsers: 0,
             totalCompanies: 0,
-            verifiedScams: 0
+            verifiedScams: 0,
         }, { status: 500 })
     }
 }

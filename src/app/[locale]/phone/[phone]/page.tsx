@@ -1,7 +1,6 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import connectDB from '@/lib/mongodb'
-import Scam from '@/lib/models/Scam'
+import { supabaseAdmin } from '@/lib/supabase'
 import SearchForm from '@/components/SearchForm'
 import AdSpace from '@/components/AdSpace'
 import Link from 'next/link'
@@ -19,19 +18,15 @@ interface PageProps {
 
 async function getScamByPhone(phone: string) {
     try {
-        await connectDB()
-        // Simple normalization: remove non-digits
         const cleanPhone = phone.replace(/\D/g, '')
-        // Try exact match or match with +
-        const scam = await Scam.findOne({
-            $or: [
-                { phoneNumber: cleanPhone },
-                { phoneNumber: `+${cleanPhone}` },
-                { phoneNumber: phone }
-            ]
-        }).lean()
+        const { data: scam } = await supabaseAdmin
+            .from('scams')
+            .select('id, phone_number, company, scam_type, description, likes, dislikes, is_verified')
+            .or(`phone_number.eq.${cleanPhone},phone_number.eq.+${cleanPhone},phone_number.eq.${phone}`)
+            .limit(1)
+            .single()
 
-        return scam ? JSON.parse(JSON.stringify(scam)) : null
+        return scam || null
     } catch (e) {
         return null
     }
@@ -51,9 +46,6 @@ export default async function PhonePage({ params }: PageProps) {
     const formattedPhone = phone.replace(/(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})/, '+$1 ($2) $3-$4-$5')
 
     if (scam) {
-        // Если номер есть в базе - показываем мини-карточку и ссылку на полную версию
-        // Или рендерим полную версию прямо тут.
-        // Для SEO лучше рендерить уникальный контент.
         return (
             <div className="min-h-screen bg-[#F9F9F7] py-12 px-4">
                 <div className="container mx-auto max-w-4xl">
@@ -80,7 +72,7 @@ export default async function PhonePage({ params }: PageProps) {
 
                                     <h3 className="text-gray-500 text-sm uppercase tracking-wider mb-2">Категория</h3>
                                     <span className="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-bold mb-6">
-                                        {scam.scamType}
+                                        {scam.scam_type}
                                     </span>
                                 </div>
                                 <div>
@@ -104,7 +96,7 @@ export default async function PhonePage({ params }: PageProps) {
 
                             <div className="mt-8">
                                 <Link
-                                    href={`/scams/${scam._id}`}
+                                    href={`/scams/${scam.id}`}
                                     className="w-full block text-center bg-[#111111] text-white py-4 rounded-xl font-bold hover:bg-gray-800 transition-colors"
                                 >
                                     Смотреть полные детали и комментарии

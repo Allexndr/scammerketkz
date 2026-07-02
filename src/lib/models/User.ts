@@ -15,6 +15,11 @@ export interface IUser extends mongoose.Document {
   updatedAt: Date
   votes: mongoose.Types.ObjectId[]
   reportsCount: number
+  verifiedReportsCount: number
+  peopleProtected: number
+  badges: string[]
+  streak: number
+  lastActiveDate: Date
   apiKeys?: {
     key: string;
     name: string;
@@ -54,6 +59,26 @@ const UserSchema = new mongoose.Schema<IUser>({
   reportsCount: {
     type: Number,
     default: 0
+  },
+  verifiedReportsCount: {
+    type: Number,
+    default: 0
+  },
+  peopleProtected: {
+    type: Number,
+    default: 0
+  },
+  badges: {
+    type: [String],
+    default: []
+  },
+  streak: {
+    type: Number,
+    default: 0
+  },
+  lastActiveDate: {
+    type: Date,
+    default: Date.now
   },
   name: {
     type: String,

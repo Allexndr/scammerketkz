@@ -1,6 +1,7 @@
 'use client';
 
 import ReportForm from '@/components/ReportForm';
+import DisclaimerBanner from '@/components/DisclaimerBanner';
 
 export default function ReportPage() {
     return (
@@ -10,6 +11,7 @@ export default function ReportPage() {
                 <p className="text-gray-600">Ваш вклад поможет очистить информационное пространство Казахстана</p>
             </div>
             <div className="container mx-auto max-w-2xl mb-20">
+                <DisclaimerBanner />
                 <ReportForm />
             </div>
         </div>

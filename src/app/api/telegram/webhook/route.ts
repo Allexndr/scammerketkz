@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import connectDB from '@/lib/mongodb'
-import User from '@/lib/models/User'
-import Scam from '@/lib/models/Scam'
+import { supabaseAdmin } from '@/lib/supabase'
+import crypto from 'crypto'
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const WEB_APP_URL = 'https://scammerket.vercel.app'
@@ -36,7 +35,6 @@ const TXT = {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json()
-        await connectDB()
 
         // 1. Handle Callback Query (Button Clicks)
         if (body.callback_query) {
@@ -46,7 +44,6 @@ export async function POST(req: NextRequest) {
             if (data === 'mode_text') {
                 await sendMainMenu(chatId)
             }
-            // Answer callback to verify interaction
             await answerCallback(body.callback_query.id)
             return NextResponse.json({ ok: true })
         }
@@ -59,18 +56,24 @@ export async function POST(req: NextRequest) {
 
             // --- /start ---
             if (text === '/start') {
-                // Upsert User
-                await User.findOneAndUpdate(
-                    { telegramId: user.id.toString() },
-                    {
-                        $set: {
+                // Upsert User in Supabase
+                const { data: existingUser } = await supabaseAdmin
+                    .from('users')
+                    .select('id')
+                    .eq('email', `tg-${user.id}@scammerketkz.kz`)
+                    .single()
+
+                if (!existingUser) {
+                    await supabaseAdmin
+                        .from('users')
+                        .insert({
                             name: [user.first_name, user.last_name].filter(Boolean).join(' '),
-                            username: user.username
-                        },
-                        $setOnInsert: { role: 'user', points: 0, reportsCount: 0 }
-                    },
-                    { upsert: true, new: true }
-                )
+                            email: `tg-${user.id}@scammerketkz.kz`,
+                            points: 0,
+                            rank: 'Новичок',
+                            reports_count: 0,
+                        })
+                }
 
                 await sendMessage(chatId, `${TXT.start.ru}\n\n${TXT.start.kz}`, {
                     reply_markup: {
@@ -85,8 +88,12 @@ export async function POST(req: NextRequest) {
 
             // --- Main Menu Commands ---
             if (text === TXT.btns.profile) {
-                const dbUser = await User.findOne({ telegramId: user.id.toString() })
-                await sendMessage(chatId, TXT.profile(dbUser?.name || 'User', dbUser?.reportsCount || 0, dbUser?.points || 0))
+                const { data: dbUser } = await supabaseAdmin
+                    .from('users')
+                    .select('name, reports_count, points')
+                    .eq('email', `tg-${user.id}@scammerketkz.kz`)
+                    .single()
+                await sendMessage(chatId, TXT.profile(dbUser?.name || 'User', dbUser?.reports_count || 0, dbUser?.points || 0))
                 return NextResponse.json({ ok: true })
             }
 
@@ -108,7 +115,6 @@ export async function POST(req: NextRequest) {
             const cleanText = text?.replace(/\D/g, '') || ''
             if (cleanText.length >= 10 && (cleanText.startsWith('7') || cleanText.startsWith('8'))) {
 
-                // 1. Normalize (same as in security.ts)
                 let normalized = cleanText
                 if (normalized.length === 11 && normalized.startsWith('8')) {
                     normalized = '7' + normalized.substring(1)
@@ -117,27 +123,23 @@ export async function POST(req: NextRequest) {
                     normalized = '7' + normalized
                 }
 
-                // 2. Hash
-                const crypto = require('crypto')
                 const phoneHash = crypto.createHash('sha256').update(normalized).digest('hex')
 
-                // 3. Search by Hash (fast and accurate)
-                // Also optionally search by partial regex for user friendliness if needed, 
-                // but hash is best for "is this specific number verified?"
-                const scam = await Scam.findOne({ phoneHash })
+                const { data: scam } = await supabaseAdmin
+                    .from('scams')
+                    .select('phone_number, company, scam_type')
+                    .eq('phone_hash', phoneHash)
+                    .single()
 
                 if (scam) {
-                    // Normalize for display
-                    const formattedPhone = scam.phoneNumber.replace(/(\d{1})(\d{3})(\d{3})(\d{4})/, '+$1 ($2) $3-$4')
-                    await sendMessage(chatId, TXT.scam(formattedPhone, scam.company, scam.scamType))
+                    const formattedPhone = scam.phone_number.replace(/(\d{1})(\d{3})(\d{3})(\d{4})/, '+$1 ($2) $3-$4')
+                    await sendMessage(chatId, TXT.scam(formattedPhone, scam.company, scam.scam_type))
                 } else {
                     await sendMessage(chatId, TXT.clean(cleanText))
                 }
                 return NextResponse.json({ ok: true })
             }
 
-            // Unknown command -> Show Menu again if text mode was active, otherwise default hint
-            // Just send simple hint
             await sendMessage(chatId, TXT.unknown)
         }
 

@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useUser } from '@/context/UserContext'
 import { useRouter } from 'next/navigation'
-import { Copy, Plus, Trash2, Key, Shield, AlertTriangle } from 'lucide-react'
+import { Copy, Plus, Trash2, Key, Shield, AlertTriangle, Flame } from 'lucide-react'
+import BadgesDisplay from '@/components/BadgesDisplay'
+import ImpactStats from '@/components/ImpactStats'
+import { useToast } from '@/components/ToastProvider'
 
 interface ApiKey {
     key: string;
@@ -14,6 +17,7 @@ interface ApiKey {
 
 export default function ProfilePage() {
     const { user, isLoggedIn } = useUser()
+    const { showToast } = useToast()
     const router = useRouter()
     const [keys, setKeys] = useState<ApiKey[]>([])
     const [loading, setLoading] = useState(false)
@@ -40,12 +44,16 @@ export default function ProfilePage() {
             const res = await fetch('/api/profile/generate_key', { method: 'POST' })
             const data = await res.json()
             if (data.key) {
-                // Refresh page or update state
-                setKeys(data.keys)
-                alert('Ключ создан! Сохраните его: ' + data.key)
+                setKeys([data.key])
+                showToast('API ключ создан!', 'success')
+                navigator.clipboard.writeText(data.key).then(() => {
+                    showToast('Ключ скопирован в буфер обмена', 'info')
+                })
+            } else {
+                showToast(data.error || 'Ошибка создания ключа', 'error')
             }
         } catch (e) {
-            alert('Ошибка сервера')
+            showToast('Ошибка сервера', 'error')
         } finally {
             setLoading(false)
         }
@@ -72,8 +80,38 @@ export default function ProfilePage() {
                             <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-bold">
                                 {user.points} Очков
                             </span>
+                            {(user as any).streak > 0 && (
+                                <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-bold flex items-center gap-1">
+                                    <Flame className="w-3 h-3" />
+                                    {(user as any).streak} дней подряд
+                                </span>
+                            )}
                         </div>
                     </div>
+                </div>
+
+                {/* Impact Stats */}
+                <div className="mb-8">
+                    <ImpactStats user={{
+                        points: user.points || 0,
+                        reportsCount: user.reportsCount || 0,
+                        verifiedReportsCount: (user as any).verifiedReportsCount || 0,
+                        peopleProtected: (user as any).peopleProtected || 0,
+                        streak: (user as any).streak || 0,
+                    }} />
+                </div>
+
+                {/* Badges */}
+                <div className="mb-8">
+                    <BadgesDisplay user={{
+                        points: user.points || 0,
+                        reportsCount: user.reportsCount || 0,
+                        verifiedReportsCount: (user as any).verifiedReportsCount || 0,
+                        peopleProtected: (user as any).peopleProtected || 0,
+                        streak: (user as any).streak || 0,
+                        votes: (user as any).votes || [],
+                        badges: (user as any).badges || [],
+                    }} />
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-8">
@@ -144,6 +182,9 @@ export default function ProfilePage() {
                             <div className="text-center py-12">
                                 <Shield className="w-12 h-12 text-gray-200 mx-auto mb-3" />
                                 <p className="text-gray-400">Вы пока не отправляли жалоб</p>
+                                <a href="/report" className="mt-4 inline-block btn-primary px-6 py-2 text-sm">
+                                    Добавить первый отчёт
+                                </a>
                             </div>
                         )}
 
@@ -160,8 +201,8 @@ export default function ProfilePage() {
                                 try {
                                     const res = await fetch('/api/admin/parse', { method: 'POST' })
                                     const data = await res.json()
-                                    alert(data.message + '\n' + data.logs.slice(0, 5).join('\n') + '...')
-                                } catch (e) { alert('Error') }
+                                    showToast(data.message || 'Парсинг запущен', 'success')
+                                } catch (e) { showToast('Ошибка парсинга', 'error') }
                             }}
                             className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg font-mono"
                         >

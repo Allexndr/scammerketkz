@@ -6,6 +6,7 @@ export interface IScam extends mongoose.Document {
   phoneHash: string // hashed for privacy
   gender: 'male' | 'female' | 'unknown'
   company: string
+  representedAs: string
   scamType: string
   region: string
   description: string
@@ -39,9 +40,15 @@ const ScamSchema = new mongoose.Schema<IScam>({
     required: true,
     trim: true
   },
+  representedAs: {
+    type: String,
+    default: '',
+    trim: true,
+    maxlength: 200
+  },
   scamType: {
     type: String,
-    enum: ['phishing', 'fake_sale', 'fake_shop', 'crypto', 'rental', 'prize', 'other'],
+    enum: ['phishing', 'vishing', 'smishing', 'impersonation', 'investment', 'loan', 'crypto', 'fake_sale', 'fake_shop', 'rental', 'prize', 'other'],
     default: 'other'
   },
   region: {
@@ -87,5 +94,14 @@ const ScamSchema = new mongoose.Schema<IScam>({
 })
 
 // Note: Verification status is calculated in the API routes
+
+// Database indexes for performance
+ScamSchema.index({ company: 1 })
+ScamSchema.index({ createdAt: -1 })
+ScamSchema.index({ isVerified: 1 })
+ScamSchema.index({ scamType: 1 })
+ScamSchema.index({ region: 1 })
+ScamSchema.index({ likes: -1 })
+ScamSchema.index({ phoneHash: 1 }, { unique: true })
 
 export default mongoose.models.Scam || mongoose.model<IScam>('Scam', ScamSchema)

@@ -115,6 +115,11 @@ export function sanitizeFraudType(input: string): string {
         'impersonation',
         'investment',
         'loan',
+        'crypto',
+        'fake_sale',
+        'fake_shop',
+        'rental',
+        'prize',
         'other'
     ]
 

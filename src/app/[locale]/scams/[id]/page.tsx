@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ThumbsUp, ThumbsDown, User, Shield, AlertTriangle, ArrowLeft } from 'lucide-react'
+import { ThumbsUp, ThumbsDown, User, Shield, AlertTriangle, ArrowLeft, Copy, Share2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import AdSpace from '@/components/AdSpace'
 import CommentsSection from '@/components/CommentsSection'
+import { useToast } from '@/components/ToastProvider'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,6 +30,7 @@ interface ScamDetails {
 
 export default function ScamDetailsPage() {
     const { id } = useParams()
+    const { showToast } = useToast()
     const [scam, setScam] = useState<ScamDetails | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -65,9 +67,14 @@ export default function ScamDetailsPage() {
                     dislikes: data.dislikes,
                     isVerified: data.isVerified
                 } : null)
+                showToast(type === 'like' ? 'Голос учтён' : 'Возражение учтено', 'success')
+            } else {
+                const err = await res.json()
+                showToast(err.error || 'Ошибка голосования', 'error')
             }
         } catch (err) {
             console.error('Vote failed', err)
+            showToast('Ошибка сети', 'error')
         }
     }
 
@@ -85,8 +92,65 @@ export default function ScamDetailsPage() {
         ? Math.round((scam.likes / (scam.likes + scam.dislikes)) * 100)
         : 0
 
+    // Dynamic SEO: update document title with phone number for search engines
+    useEffect(() => {
+        if (scam) {
+            document.title = `${scam.phoneNumber} — ${scam.company} | Мошенник? | ScammerKetKz`
+            const metaDesc = document.querySelector('meta[name="description"]')
+            if (metaDesc) {
+                metaDesc.setAttribute('content', `Номер ${scam.phoneNumber} (${scam.company}) — ${scam.scamType}, ${scam.region}. ${scam.description?.substring(0, 120)}`)
+            }
+            // Canonical link
+            let canonical = document.querySelector('link[rel="canonical"]')
+            if (!canonical) {
+                canonical = document.createElement('link')
+                canonical.setAttribute('rel', 'canonical')
+                document.head.appendChild(canonical)
+            }
+            canonical.setAttribute('href', window.location.href)
+            // OG tags
+            const setMeta = (prop: string, content: string) => {
+                let tag = document.querySelector(`meta[property="${prop}"]`)
+                if (!tag) {
+                    tag = document.createElement('meta')
+                    tag.setAttribute('property', prop)
+                    document.head.appendChild(tag)
+                }
+                tag.setAttribute('content', content)
+            }
+            setMeta('og:title', `${scam.phoneNumber} — ${scam.company} | Мошенник?`)
+            setMeta('og:description', `Тип: ${scam.scamType}, Регион: ${scam.region}. ${scam.description?.substring(0, 100)}`)
+            setMeta('og:type', 'article')
+        }
+    }, [scam])
+
+    // JSON-LD structured data for SEO
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: `Мошенник: ${scam.company} — ${scam.phoneNumber}`,
+        description: scam.description,
+        datePublished: scam.createdAt,
+        author: { '@type': 'Organization', name: 'ScammerKetKz' },
+        publisher: { '@type': 'Organization', name: 'ScammerKetKz' },
+        mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': typeof window !== 'undefined' ? window.location.href : ''
+        },
+        about: {
+            '@type': 'Thing',
+            name: `Телефонный мошенник ${scam.phoneNumber}`,
+            description: `${scam.company} — ${scam.scamType}, ${scam.region}`
+        },
+        keywords: `${scam.phoneNumber}, мошенник, ${scam.company}, ${scam.scamType}, ${scam.region}, Казахстан`
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 py-8">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
             <div className="container mx-auto px-4 max-w-4xl">
                 <Link href="/scams" className="inline-flex items-center text-gray-500 hover:text-gray-900 mb-6">
                     <ArrowLeft size={20} className="mr-2" />
@@ -99,10 +163,35 @@ export default function ScamDetailsPage() {
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                             <div>
                                 <h1 className="text-3xl font-bold text-gray-900 mb-2">{scam.company}</h1>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 flex-wrap">
                                     <span className="text-lg font-mono bg-gray-200 px-3 py-1 rounded text-gray-800">
                                         {scam.phoneNumber}
                                     </span>
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(scam.phoneNumber)
+                                            showToast('Номер скопирован', 'success')
+                                        }}
+                                        className="p-1.5 text-gray-400 hover:text-[#A6845B] transition-colors"
+                                        title="Скопировать номер"
+                                    >
+                                        <Copy className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const text = `⚠️ Мошенник: ${scam.phoneNumber} (${scam.company}) — проверьте на scammerket.kz`
+                                            if (navigator.share) {
+                                                navigator.share({ title: 'Мошенник', text, url: window.location.href })
+                                            } else {
+                                                navigator.clipboard.writeText(text + ' ' + window.location.href)
+                                                showToast('Ссылка скопирована', 'success')
+                                            }
+                                        }}
+                                        className="p-1.5 text-gray-400 hover:text-[#A6845B] transition-colors"
+                                        title="Поделиться"
+                                    >
+                                        <Share2 className="w-4 h-4" />
+                                    </button>
                                     <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
                                         {scam.scamType}
                                     </span>

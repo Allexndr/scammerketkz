@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Shield, Menu, X, Briefcase, Bot, User } from 'lucide-react'
+import { Shield, Menu, X, Briefcase, Bot, User, Users } from 'lucide-react'
 import LanguageSwitcher from './LanguageSwitcher'
 import { useUser } from '@/context/UserContext'
 
@@ -27,8 +27,9 @@ export default function Navbar() {
     const navLinks = [
         { href: '/', label: t('home') },
         { href: '/scams', label: t('scams') },
+        { href: '/registry', label: 'Реестр', icon: Users },
         { href: '/ai', label: 'AI Анализ', icon: Bot },
-        { href: '/business', label: 'API для бизнеса', icon: Briefcase },
+        { href: '/business', label: 'API', icon: Briefcase },
     ]
 
     const isLinkActive = (href: string) => {

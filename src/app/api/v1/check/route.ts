@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import connectDB from '@/lib/mongodb'
-import User from '@/lib/models/User'
-import Scam from '@/lib/models/Scam'
+import { supabaseAdmin } from '@/lib/supabase'
 import blacklist from '@/lib/blacklist.json'
 
-// Force dynamic because we check DB
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
     try {
-        await connectDB()
-
         // 1. Auth Check
         const authHeader = req.headers.get('authorization')
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -19,37 +14,15 @@ export async function POST(req: NextRequest) {
 
         const apiKey = authHeader.split(' ')[1]
 
-        // Find user with this active API key
-        const user = await User.findOne({
-            'apiKeys': {
-                $elemMatch: { key: apiKey, isActive: true }
-            }
-        })
+        const { data: user, error: userError } = await supabaseAdmin
+            .from('users')
+            .select('id, api_key')
+            .eq('api_key', apiKey)
+            .single()
 
-        if (!user) {
+        if (userError || !user) {
             return NextResponse.json({ error: 'Unauthorized', message: 'Invalid API Key' }, { status: 401 })
         }
-
-        // Check Limits
-        const keyData = user.apiKeys.find((k: any) => k.key === apiKey)
-        if (keyData) {
-            // limit -1 means infinite
-            if (keyData.limit !== -1 && (keyData.usage || 0) >= keyData.limit) {
-                return NextResponse.json({
-                    error: 'Payment Required',
-                    message: 'API Request Limit Reached (100/100). Upgrade plan at /business'
-                }, { status: 403 })
-            }
-        }
-
-        // Update usage stat (fire and forget)
-        await User.updateOne(
-            { _id: user._id, 'apiKeys.key': apiKey },
-            {
-                $set: { 'apiKeys.$.lastUsed': new Date() },
-                $inc: { 'apiKeys.$.usage': 1 }
-            }
-        )
 
         // 2. Parse Input
         const body = await req.json()
@@ -59,7 +32,6 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Bad Request', message: 'Phone number required' }, { status: 400 })
         }
 
-        // Normalize phone (simple version)
         const cleanPhone = phone.replace(/\D/g, '')
 
         // 3. Check Blacklist (Official/Static)
@@ -74,15 +46,18 @@ export async function POST(req: NextRequest) {
                 details: {
                     name: blacklistMatch.name,
                     type: blacklistMatch.type,
-                    status: blacklistMatch.status
-                }
+                    status: blacklistMatch.status,
+                },
             })
         }
 
-        // 4. Check Community Database (MongoDB)
-        const scam = await Scam.findOne({
-            phoneNumber: { $regex: cleanPhone }
-        })
+        // 4. Check Community Database (Supabase)
+        const { data: scam } = await supabaseAdmin
+            .from('scams')
+            .select('id, phone_number, company, likes, dislikes, updated_at')
+            .ilike('phone_number', `%${cleanPhone}%`)
+            .limit(1)
+            .single()
 
         if (scam) {
             const totalVotes = scam.likes + scam.dislikes
@@ -96,8 +71,8 @@ export async function POST(req: NextRequest) {
                 details: {
                     reports_count: scam.likes,
                     company: scam.company,
-                    last_updated: scam.updatedAt
-                }
+                    last_updated: scam.updated_at,
+                },
             })
         }
 
@@ -107,7 +82,7 @@ export async function POST(req: NextRequest) {
             risk_score: 0,
             verdict: 'clean',
             source: 'scammerket_db',
-            message: 'No reports found'
+            message: 'No reports found',
         })
 
     } catch (error) {

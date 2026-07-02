@@ -1,30 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import connectDB from '@/lib/mongodb'
-import Scam from '@/lib/models/Scam'
+import { supabaseAdmin } from '@/lib/supabase'
 import crypto from 'crypto'
-import { sanitizeSearchQuery, sanitizePhone, sanitizeCompanyName, checkRateLimit, escapeRegex, normalizePhone } from '@/lib/security'
+import { sanitizeSearchQuery, sanitizeCompanyName, checkRateLimit, normalizePhone } from '@/lib/security'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
-    // Get client IP for rate limiting
     const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0] ||
-      request.headers.get('x-real-ip') ||
-      'unknown'
+      request.headers.get('x-real-ip') || 'unknown'
 
-    // Rate limiting: 30 requests per minute
     const rateCheck = checkRateLimit(`search-${clientIp}`, 30, 60000)
     if (!rateCheck.allowed) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': '60',
-            'X-RateLimit-Remaining': '0'
-          }
-        }
+        { status: 429, headers: { 'Retry-After': '60', 'X-RateLimit-Remaining': '0' } }
       )
     }
 
@@ -32,127 +22,85 @@ export async function GET(request: NextRequest) {
     const rawQuery = searchParams.get('q')
     const rawType = searchParams.get('type')
 
-    // Validate inputs
     if (!rawQuery || typeof rawQuery !== 'string') {
-      return NextResponse.json(
-        { error: 'Query parameter is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Query parameter is required' }, { status: 400 })
     }
 
-    // Sanitize inputs to prevent injection
     const query = sanitizeSearchQuery(rawQuery)
-    const type = rawType === 'company' ? 'company' : 'phone' // Whitelist approach
+    const type = rawType === 'company' ? 'company' : 'phone'
 
-    // Prevent empty queries after sanitization
     if (!query || query.length < 2) {
-      return NextResponse.json(
-        { error: 'Query too short or invalid' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Query too short or invalid' }, { status: 400 })
     }
 
     let results: any[] = []
 
-    // Try to connect to database
-    const db = await connectDB().catch(() => null)
-    const dbConnected = db && (db as any).connection?.readyState === 1
+    try {
+      if (type === 'phone') {
+        const normalizedInput = normalizePhone(query)
+        const rawDigits = query.replace(/\D/g, '')
 
-    if (dbConnected) {
-      try {
-        let searchCriteria: any = {}
-
-        if (type === 'phone') {
-          // Normalize phone logic
-          const normalizedInput = normalizePhone(query)
-          const rawDigits = query.replace(/\D/g, '')
-
-          const conditions: any[] = []
-
-          // 1. Exact Hash Match (High Confidence)
-          if (normalizedInput.length >= 10) {
-            const phoneHash = crypto.createHash('sha256').update(normalizedInput).digest('hex')
-            conditions.push({ phoneHash })
-          }
-
-          // 2. Partial RegEx Match (For usability)
-          // Matches if the stored phoneNumber contains the input digits (even if formatted)
-          // We search for the digits the user typed.
-          if (rawDigits.length > 2) {
-            conditions.push({ phoneNumber: { $regex: rawDigits, $options: 'i' } })
-          }
-
-          // Combined OR query
-          if (conditions.length > 0) {
-            searchCriteria = { $or: conditions }
-          } else {
-            // Fallback for short non-digit queries?
-            searchCriteria = { phoneNumber: { $regex: escapeRegex(query), $options: 'i' } }
-          }
-        } else if (type === 'company') {
-          // Sanitize company name
-          const sanitizedCompany = sanitizeCompanyName(query)
-
-          // Escape regex special characters to prevent ReDoS
-          const escapedQuery = escapeRegex(sanitizedCompany)
-
-          searchCriteria = {
-            company: {
-              $regex: escapedQuery,
-              $options: 'i'
-            }
-          }
+        // Try hash match first
+        if (normalizedInput.length >= 10) {
+          const phoneHash = crypto.createHash('sha256').update(normalizedInput).digest('hex')
+          const { data: hashMatches } = await supabaseAdmin
+            .from('scams')
+            .select('id, phone_number, company, description, is_verified, likes, dislikes, status, created_at')
+            .eq('phone_hash', phoneHash)
+            .limit(20)
+          if (hashMatches) results = hashMatches
         }
 
-        // Limit results to prevent DoS
-        const dbScams = await Scam.find(searchCriteria)
+        // If no hash match, try partial phone match
+        if (results.length === 0 && rawDigits.length > 2) {
+          const { data: partialMatches, error } = await supabaseAdmin
+            .from('scams')
+            .select('id, phone_number, company, description, is_verified, likes, dislikes, status, created_at')
+            .ilike('phone_number', `%${rawDigits}%`)
+            .limit(20)
+          if (partialMatches) results = partialMatches
+        }
+      } else if (type === 'company') {
+        const sanitizedCompany = sanitizeCompanyName(query)
+        const { data: companyMatches, error } = await supabaseAdmin
+          .from('scams')
+          .select('id, phone_number, company, description, is_verified, likes, dislikes, status, created_at')
+          .ilike('company', `%${sanitizedCompany}%`)
           .limit(20)
-          .select('_id phoneNumber company description isVerified likes dislikes status createdAt')
-          .lean() // Use lean() for better performance and security
-          .exec()
-
-        results = dbScams.map((s: any) => ({
-          _id: s._id?.toString(),
-          phoneNumber: String(s.phoneNumber || ''),
-          company: sanitizeCompanyName(s.company || ''),
-          description: String(s.description || '').substring(0, 500),
-          isVerified: Boolean(s.isVerified),
-          likes: Math.max(0, parseInt(s.likes || 0)),
-          dislikes: Math.max(0, parseInt(s.dislikes || 0)),
-          status: String(s.status || 'Pending'),
-          createdAt: s.createdAt
-        }))
-      } catch (dbError) {
-        console.error('Database query error:', dbError)
-        // Don't expose internal errors to client
-        // Continue with mock data only
+        if (companyMatches) results = companyMatches
       }
+    } catch (dbError) {
+      console.error('Database query error:', dbError)
     }
 
-    // Combine results
-    const finalResults = results
+    const finalResults = results.map((s: any) => ({
+      _id: s.id,
+      phoneNumber: String(s.phone_number || ''),
+      company: sanitizeCompanyName(s.company || ''),
+      description: String(s.description || '').substring(0, 500),
+      isVerified: Boolean(s.is_verified),
+      likes: Math.max(0, s.likes || 0),
+      dislikes: Math.max(0, s.dislikes || 0),
+      status: String(s.status || 'Pending'),
+      createdAt: s.created_at,
+    }))
 
     return NextResponse.json({
-      results: finalResults.slice(0, 20), // Hard limit
+      results: finalResults.slice(0, 20),
       total: finalResults.length,
-      rateLimitRemaining: rateCheck.remaining
+      rateLimitRemaining: rateCheck.remaining,
     }, {
       headers: {
         'X-RateLimit-Remaining': String(rateCheck.remaining),
         'Cache-Control': 'private, no-cache, no-store, must-revalidate',
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
-        'X-XSS-Protection': '1; mode=block'
-      }
+        'X-XSS-Protection': '1; mode=block',
+      },
     })
   } catch (error) {
     console.error('Error searching:', error)
-
-    // Never expose internal error details
-    return NextResponse.json(
-      { error: 'An error occurred while searching' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'An error occurred while searching' }, { status: 500 })
   }
 }
 

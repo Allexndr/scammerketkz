@@ -3,9 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from '@/i18n/routing'
 import { AlertCircle, Upload, X } from 'lucide-react'
+import { useToast } from '@/components/ToastProvider'
 
 export default function ReportForm() {
   const router = useRouter()
+  const { showToast } = useToast()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -20,12 +22,18 @@ export default function ReportForm() {
   })
 
   const scamTypes = [
-    'Банковский фишинг',
-    'Подозрительные крипто-операции',
-    'Фейковая продажа',
-    'Лже-сотрудник банка',
-    'Инвестиционная пирамида',
-    'Другое',
+    { label: 'Банковский фишинг', value: 'phishing' },
+    { label: 'Вишинг (телефонный обман)', value: 'vishing' },
+    { label: 'SMS-фишинг', value: 'smishing' },
+    { label: 'Подозрительные крипто-операции', value: 'crypto' },
+    { label: 'Фейковая продажа', value: 'fake_sale' },
+    { label: 'Фейковый магазин', value: 'fake_shop' },
+    { label: 'Лже-сотрудник банка', value: 'impersonation' },
+    { label: 'Инвестиционная пирамида', value: 'investment' },
+    { label: 'Ложный заём', value: 'loan' },
+    { label: 'Аренда (мошенничество)', value: 'rental' },
+    { label: 'Выигрыш приза', value: 'prize' },
+    { label: 'Другое', value: 'other' },
   ]
 
   const regions = [
@@ -55,12 +63,21 @@ export default function ReportForm() {
       const response = await fetch('/api/scams', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          phoneNumber: formData.phone,
+          gender: formData.gender === 'Мужчина' ? 'male' : formData.gender === 'Женщина' ? 'female' : 'unknown',
+          representedAs: formData.representedAs,
+          company: formData.company,
+          scamType: formData.type,
+          region: formData.region,
+          description: formData.description,
+        }),
       })
 
       if (response.ok) {
         const data = await response.json()
-        router.push(`/scams/${data.id}`)
+        showToast('Отчёт добавлен! Спасибо за вклад.', 'success')
+        router.push(`/scams/${data.scamId || data.id}`)
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'Ошибка при добавлении')
@@ -177,8 +194,8 @@ export default function ReportForm() {
           >
             <option value="">Выберите тип...</option>
             {scamTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
+              <option key={type.value} value={type.value}>
+                {type.label}
               </option>
             ))}
           </select>

@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import connectDB from '@/lib/mongodb'
-import Scam from '@/lib/models/Scam'
-import User from '@/lib/models/User' // Ensure User is registered
-import Comment from '@/lib/models/Comment' // Ensure Comment is registered
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,60 +8,59 @@ export async function GET(
     { params }: { params: { id: string } }
 ) {
     try {
-        await connectDB()
-
-        // Force model registration (prevent tree-shaking)
-        const _models = { User, Comment }
-
         const { id } = await params
 
-        // Validate ID format
-        if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-            return NextResponse.json(
-                { error: 'Invalid ID format' },
-                { status: 400 }
-            )
+        // UUID format validation
+        if (!id.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+            return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 })
         }
 
-        const scam = await Scam.findById(id)
-            .populate('reportedBy', 'name rank')
-            .populate({
-                path: 'comments',
-                populate: { path: 'author', select: 'name rank' },
-                options: { sort: { createdAt: -1 } }
-            })
+        const { data: scam, error } = await supabaseAdmin
+            .from('scams')
+            .select(`
+                id, phone_number, gender, company, represented_as, scam_type, region,
+                description, likes, dislikes, is_verified, status, reported_by, created_at,
+                reported_by_user:users!reported_by(name, rank)
+            `)
+            .eq('id', id)
+            .single()
 
-        if (!scam) {
-            return NextResponse.json(
-                { error: 'Scam report not found' },
-                { status: 404 }
-            )
+        if (error || !scam) {
+            return NextResponse.json({ error: 'Scam report not found' }, { status: 404 })
         }
 
-        // Transform for response
+        // Get comments separately
+        const { data: comments } = await supabaseAdmin
+            .from('comments')
+            .select('id, user_name, text, created_at')
+            .eq('scam_id', id)
+            .order('created_at', { ascending: false })
+
         const transformedScam = {
-            _id: scam._id,
-            phoneNumber: scam.phoneNumber.replace(/(\d{0,7})\d{4}(\d*)/, '$1****$2'), // Masked
-            fullPhoneNumber: scam.phoneNumber, // Only if authorized? For now publicly available based on TK "users verify"
+            _id: scam.id,
+            phoneNumber: scam.phone_number,
             gender: scam.gender,
             company: scam.company,
-            scamType: scam.scamType,
+            representedAs: scam.represented_as || '',
+            scamType: scam.scam_type,
             region: scam.region,
             description: scam.description,
             likes: scam.likes,
             dislikes: scam.dislikes,
-            isVerified: scam.isVerified,
-            reportedBy: scam.reportedBy,
-            createdAt: scam.createdAt,
-            comments: scam.comments
+            isVerified: scam.is_verified,
+            reportedBy: scam.reported_by_user,
+            createdAt: scam.created_at,
+            comments: (comments || []).map((c: any) => ({
+                _id: c.id,
+                userName: c.user_name,
+                text: c.text,
+                createdAt: c.created_at,
+            })),
         }
 
         return NextResponse.json(transformedScam)
     } catch (error) {
         console.error('Error fetching scam details:', error)
-        return NextResponse.json(
-            { error: 'Failed to fetch scam details', details: String(error) },
-            { status: 500 }
-        )
+        return NextResponse.json({ error: 'Failed to fetch scam details' }, { status: 500 })
     }
 }

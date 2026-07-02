@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Shield, AlertTriangle, ChevronRight, User } from 'lucide-react'
+import { Search, Shield, AlertTriangle, ChevronRight, User, Copy } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
+import AdSpace from '@/components/AdSpace'
+import DisclaimerBanner from '@/components/DisclaimerBanner'
 
 interface ScamRecord {
     _id: string
@@ -56,6 +58,9 @@ export default function ScamsPage() {
                     <p className="text-[#666666] text-lg">Единый реестр подтвержденных сообщений о нарушениях</p>
                 </div>
 
+                {/* Legal Disclaimer */}
+                <DisclaimerBanner />
+
                 {/* Search Bar */}
                 <div className="relative mb-12 max-w-2xl mx-auto shadow-sm group">
                     <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 w-6 h-6 transition-colors group-focus-within:text-[#A6845B]" />
@@ -78,10 +83,17 @@ export default function ScamsPage() {
                         </div>
                     ) : filteredScams.length === 0 ? (
                         <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-[#E0E0D8]">
-                            <p className="text-gray-400 text-lg">Ничего не найдено или база пуста.</p>
+                            <Shield className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                            <p className="text-gray-400 text-lg mb-2">Ничего не найдено или база пуста.</p>
+                            <p className="text-gray-400 text-sm mb-6">Станьте первым, кто сообщит о мошеннике!</p>
+                            <a href="/report" className="btn-primary px-8 py-3 inline-block">
+                                Сообщить о номере
+                            </a>
                         </div>
                     ) : (
-                        filteredScams.map((scam) => (
+                        filteredScams.map((scam, idx) => (
+                            <div key={scam._id}>
+                            {(idx === 3) && <AdSpace type="native" />}
                             <Link
                                 key={scam._id}
                                 href={`/scams/${scam._id}`}
@@ -94,8 +106,18 @@ export default function ScamsPage() {
                                             <Shield className="w-7 h-7" />
                                         </div>
                                         <div>
-                                            <div className="flex items-center gap-3 mb-1">
-                                                <h3 className="text-xl font-bold text-[#111111]">{scam.phoneNumber}</h3>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h3 className="text-xl font-bold text-[#111111] font-mono">{scam.phoneNumber}</h3>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault()
+                                                        navigator.clipboard.writeText(scam.phoneNumber)
+                                                    }}
+                                                    className="text-gray-300 hover:text-[#A6845B] transition-colors"
+                                                    title="Скопировать номер"
+                                                >
+                                                    <Copy className="w-4 h-4" />
+                                                </button>
                                                 {scam.isVerified && (
                                                     <span className="bg-red-100 text-red-700 text-[10px] font-black uppercase px-2 py-0.5 rounded tracking-tighter">
                                                         Подтверждено
@@ -121,6 +143,7 @@ export default function ScamsPage() {
                                     </div>
                                 </div>
                             </Link>
+                            </div>
                         ))
                     )}
                 </div>

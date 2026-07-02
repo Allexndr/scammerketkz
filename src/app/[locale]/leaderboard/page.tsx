@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Award, Trophy, Star, Crown, Target, TrendingUp } from 'lucide-react'
 
 // Mock data to prevent errors while backend is not ready
@@ -18,11 +18,35 @@ const statusConfig = {
 }
 
 export default function LeaderboardPage() {
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState<'all' | 'week' | 'month'>('all')
+    const [users, setUsers] = useState(mockUsers)
 
-    // Using mock data for now
-    const users = mockUsers
+    useEffect(() => {
+        fetchLeaderboard()
+    }, [filter])
+
+    const fetchLeaderboard = async () => {
+        setLoading(true)
+        try {
+            const res = await fetch(`/api/leaderboard?filter=${filter}`)
+            if (res.ok) {
+                const data = await res.json()
+                const users = data.users || data
+                if (Array.isArray(users) && users.length > 0) {
+                    setUsers(users)
+                } else {
+                    setUsers(mockUsers)
+                }
+            } else {
+                setUsers(mockUsers)
+            }
+        } catch (e) {
+            setUsers(mockUsers)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     return (
         <div className="min-h-screen pt-24 pb-16 px-4">
@@ -64,7 +88,13 @@ export default function LeaderboardPage() {
                 </div>
 
                 <div className="space-y-4 animate-slide-up">
-                    {users.map((user, index) => {
+                    {loading ? (
+                        <div className="flex flex-col gap-4">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="h-24 bg-gray-100 animate-pulse rounded-3xl border border-gray-200"></div>
+                            ))}
+                        </div>
+                    ) : users.map((user, index) => {
                         const StatusIcon = statusConfig[user.status as keyof typeof statusConfig]?.icon || Star
                         const statusColor = statusConfig[user.status as keyof typeof statusConfig]?.color || 'from-gray-400 to-gray-500'
                         const isTop3 = index < 3

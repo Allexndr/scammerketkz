@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import connectDB from '@/lib/mongodb'
-import User from '@/lib/models/User'
+import { supabaseAdmin } from '@/lib/supabase'
 import crypto from 'crypto'
 
 export async function POST(req: NextRequest) {
@@ -13,35 +12,38 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const user = await User.findOne({ email: session.user.email })
-        if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+        const { data: user, error: userError } = await supabaseAdmin
+            .from('users')
+            .select('id, api_key, updated_at')
+            .eq('email', session.user.email)
+            .single()
 
-        // Security Audit: Rate Limit Key Gen
-        const lastKey = user.apiKeys?.[user.apiKeys.length - 1]
-        if (lastKey && (new Date().getTime() - new Date(lastKey.createdAt).getTime() < 60000)) {
-            return NextResponse.json({ error: 'Please wait 1 minute before generating a new key.' }, { status: 429 })
+        if (userError || !user) {
+            return NextResponse.json({ error: 'User not found' }, { status: 404 })
         }
 
-        // Generate a random key like sk_live_...
+        // Rate limit: 1 minute between key generations
+        if (user.updated_at) {
+            const timeSinceUpdate = Date.now() - new Date(user.updated_at).getTime()
+            if (timeSinceUpdate < 60000) {
+                return NextResponse.json({ error: 'Please wait 1 minute before generating a new key.' }, { status: 429 })
+            }
+        }
+
         const randomPart = crypto.randomBytes(24).toString('hex')
         const apiKey = `sk_live_${randomPart}`
 
-        const updatedUser = await User.findOneAndUpdate(
-            { email: session.user.email },
-            {
-                $push: {
-                    apiKeys: {
-                        key: apiKey,
-                        name: 'API Key ' + new Date().toLocaleDateString(),
-                        createdAt: new Date(),
-                        isActive: true
-                    }
-                }
-            },
-            { new: true }
-        )
+        const { error: updateError } = await supabaseAdmin
+            .from('users')
+            .update({ api_key: apiKey })
+            .eq('id', user.id)
 
-        return NextResponse.json({ key: apiKey, keys: updatedUser.apiKeys })
+        if (updateError) {
+            console.error('Key update error:', updateError)
+            return NextResponse.json({ error: 'Failed to generate key' }, { status: 500 })
+        }
+
+        return NextResponse.json({ key: apiKey })
 
     } catch (error) {
         console.error('Key Generation Error:', error)

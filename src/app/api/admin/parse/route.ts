@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import connectDB from '@/lib/mongodb'
-import Scam from '@/lib/models/Scam'
+import { supabaseAdmin } from '@/lib/supabase'
 import blacklist from '@/lib/blacklist.json'
 import spamDump from '@/lib/spam_dump_ru_kz.json'
-// import User from '@/lib/models/User'
+import crypto from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
     try {
-        await connectDB()
-
-        // In real world, check if admin
-        // ...
-
-        const results = []
+        const results: string[] = []
 
         const typeMap: Record<string, string> = {
             'financial_pyramid': 'pyramid',
@@ -27,22 +21,30 @@ export async function POST(req: NextRequest) {
 
         const allData = [...blacklist, ...spamDump]
 
-        // 1. Process local blacklist (simulating parsing from file/web)
         for (const item of allData as any[]) {
-            const exists = await Scam.findOne({ phoneNumber: item.phone })
+            const phoneHash = crypto.createHash('sha256').update(item.phone).digest('hex')
+
+            const { data: exists } = await supabaseAdmin
+                .from('scams')
+                .select('id')
+                .eq('phone_hash', phoneHash)
+                .single()
 
             if (!exists) {
-                await Scam.create({
-                    phoneNumber: item.phone,
-                    company: item.name,
-                    scamType: typeMap[item.type] || 'other',
-                    description: `Официально внесен в черный список. Источник: ${item.source}. Статус: ${item.status || 'confirmed'}`,
-                    likes: 100, // Высокий рейтинг подтверждения
-                    dislikes: 0,
-                    region: 'KZ',
-                    gender: 'unknown',
-                    tags: ['official_blacklist', 'parsed']
-                })
+                await supabaseAdmin
+                    .from('scams')
+                    .insert({
+                        phone_number: item.phone,
+                        phone_hash: phoneHash,
+                        company: item.name,
+                        scam_type: typeMap[item.type] || 'other',
+                        description: `Официально внесен в черный список. Источник: ${item.source}. Статус: ${item.status || 'confirmed'}`,
+                        likes: 100,
+                        dislikes: 0,
+                        region: 'KZ',
+                        gender: 'unknown',
+                        is_verified: true,
+                    })
                 results.push(`Added ${item.name} (${item.phone})`)
             } else {
                 results.push(`Skipped ${item.name} (exists)`)
@@ -51,8 +53,8 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            message: `Parsing complete. Processed ${blacklist.length} items.`,
-            logs: results
+            message: `Parsing complete. Processed ${allData.length} items.`,
+            logs: results,
         })
 
     } catch (error) {
